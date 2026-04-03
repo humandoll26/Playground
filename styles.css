@@ -475,6 +475,25 @@ a {
   background: rgba(246, 249, 255, 0.95);
 }
 
+.service-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.service-link::after {
+  content: "→";
+  transition: transform 180ms ease;
+}
+
+.service-link:hover::after {
+  transform: translateX(3px);
+}
+
 .accent-section {
   padding: 32px;
   border-radius: 34px;
