@@ -479,10 +479,29 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 18px;
   color: var(--accent);
   font-weight: 700;
   text-decoration: none;
+}
+
+.service-examples {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(43, 109, 243, 0.08);
+}
+
+.service-examples-label {
+  margin: 0 0 10px;
+  color: #6c7c99;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.service-examples-list {
+  display: grid;
+  gap: 10px;
 }
 
 .service-link::after {
