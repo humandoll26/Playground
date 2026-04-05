@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="産業廃棄物・資源回収・再資源化を行うリサイクル事業者向けのコーポレートサイト兼LPのダミー実装です。">
+  <title>Green Cycle Works | 企業サイト兼LP</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a class="brand" href="#top" aria-label="Green Cycle Works トップへ戻る">
+          <span class="brand-mark">GC</span>
+          <span class="brand-text">
+            <strong>Green Cycle Works</strong>
+            <small>Recycling & Resource Design</small>
+          </span>
+        </a>
+
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-nav-toggle>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span class="sr-only">ナビゲーションを開閉</span>
+        </button>
+
+        <nav class="site-nav" id="site-nav" data-nav>
+          <a href="#services">事業案内</a>
+          <a href="#strengths">選ばれる理由</a>
+          <a href="#flow">導入の流れ</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contact" class="button button-primary button-small">お問い合わせ</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero section">
+        <div class="hero-bg" aria-hidden="true">
+          <div class="hero-photo"></div>
+          <div class="hero-photo-cut"></div>
+          <div class="hero-orb orb-1"></div>
+          <div class="hero-orb orb-2"></div>
+          <div class="hero-gridline"></div>
+        </div>
+
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Corporate Site + Landing Page</p>
+            <h1>
+              回収から再資源化まで、
+              <span>地域の循環を止めない</span>
+              リサイクル事業へ。
+            </h1>
+            <p class="hero-lead">
+              Green Cycle Worksは、産業廃棄物の適正処理、金属・プラスチックの資源回収、
+              法人向けの定期回収を手がけるリサイクル企業です。信頼性と相談しやすさを両立した、
+              コーポレートサイト兼LPを想定しています。
+            </p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="#contact">無料相談を申し込む</a>
+              <a class="button button-secondary" href="#services">対応品目を見る</a>
+            </div>
+            <dl class="hero-stats">
+              <div>
+                <dt>年間取扱量</dt>
+                <dd>12,800t</dd>
+              </div>
+              <div>
+                <dt>法人契約数</dt>
+                <dd>430社</dd>
+              </div>
+              <div>
+                <dt>再資源化率</dt>
+                <dd>96.4%</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="section trust-strip">
+        <div class="container trust-grid">
+          <div class="panel">
+            <p class="eyebrow">Mission</p>
+            <h2>廃棄コストを、循環価値に変えるパートナー。</h2>
+            <ul class="check-list">
+              <li>工場・倉庫・建設現場・店舗の回収に対応</li>
+              <li>定期回収とスポット回収を柔軟に設計</li>
+              <li>処理の見える化で総務・現場の負担を軽減</li>
+            </ul>
+          </div>
+          <div class="impact-card">
+            <p>CO2削減換算</p>
+            <strong>年間 2,140t</strong>
+            <span>再資源化による環境インパクトの可視化レポートも提供</span>
+          </div>
+        </div>
+        <div class="container hero-summary-grid">
+          <article class="summary-card">
+            <p class="summary-label">Resource Loop</p>
+            <h3>Collect → Sort → Recycle</h3>
+            <p>回収、選別、再資源化までを一気通貫でつなぎ、廃棄ではなく次の価値へ変えていきます。</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Compliance</p>
+            <h3>法令対応も一括サポート</h3>
+            <p>マニフェスト、計量、契約、報告まで含めて整理し、担当者の運用負荷を下げます。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="services">
+        <div class="container">
+          <div class="section-heading center">
+            <p class="eyebrow">Services</p>
+            <h2>回収から再生原料化まで、現場に合わせて設計</h2>
+            <p>
+              参考LPの「サービスカード」構成を踏まえ、事業内容が一目で伝わるように
+              4つの柱に整理しています。
+            </p>
+          </div>
+
+          <div class="card-grid services-grid">
+            <article class="info-card">
+              <span class="card-number">01</span>
+              <h3>資源回収・運搬</h3>
+              <p>金属くず、廃プラスチック、紙くず、木くずなどを現地回収。定期便の設計にも対応します。</p>
+            </article>
+            <article class="info-card">
+              <span class="card-number">02</span>
+              <h3>中間処理・選別</h3>
+              <p>混合廃棄物を種類ごとに選別し、再資源化しやすい状態へ。計量データもレポート化します。</p>
+            </article>
+            <article class="info-card">
+              <span class="card-number">03</span>
+              <h3>再資源化提案</h3>
+              <p>発生量と品目構成から、コスト削減と再資源化率の改善案を提案。拠点横断の見直しにも活用できます。</p>
+            </article>
+            <article class="info-card">
+              <span class="card-number">04</span>
+              <h3>法令・帳票サポート</h3>
+              <p>契約、マニフェスト、行政提出資料の整理を支援。担当者変更時の引き継ぎもスムーズです。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section alt-section" id="strengths">
+        <div class="container two-column">
+          <div class="media-panel">
+            <div class="media-panel-photo photo-yard"></div>
+            <div class="media-panel-note">
+              <span>Facility View</span>
+              <strong>選別ヤード・圧縮設備・回収車両の安心感を見せる</strong>
+            </div>
+          </div>
+
+          <div class="section-heading visual-copy">
+            <p class="eyebrow">Why Us</p>
+            <h2>コーポレートサイトとして必要な信頼感を、LPらしい訴求で補強</h2>
+            <p>
+              「会社紹介だけでは弱い、でも広告LPほど売り込みすぎたくない」
+              という想定で、信頼性と問い合わせ導線のバランスを取っています。
+            </p>
+
+            <div class="feature-stack">
+              <article class="feature-card">
+                <h3>現場起点の提案力</h3>
+                <p>排出現場の動線や保管状況まで見て、無理のない回収スキームを提案します。</p>
+              </article>
+              <article class="feature-card">
+                <h3>情報公開のしやすさ</h3>
+                <p>許可区分、設備、取扱品目、実績数値を整理し、企業サイトとしての安心感を担保します。</p>
+              </article>
+              <article class="feature-card">
+                <h3>問い合わせへのつながりやすさ</h3>
+                <p>「回収できるか知りたい」「見積もりを取りたい」に直結する導線を各所に配置しています。</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="results">
+        <div class="container">
+          <div class="section-heading center">
+            <p class="eyebrow">Case Examples</p>
+            <h2>導入イメージが湧く、ダミー実績セクション</h2>
+          </div>
+
+          <div class="card-grid results-grid">
+            <article class="result-card">
+              <div class="result-photo photo-factory"></div>
+              <p class="result-label">製造業</p>
+              <h3>金属端材の定期回収を月2回に集約</h3>
+              <p>拠点ごとに分散していた回収フローを統一し、管理工数を約35%削減。</p>
+            </article>
+            <article class="result-card">
+              <div class="result-photo photo-plastic"></div>
+              <p class="result-label">物流倉庫</p>
+              <h3>廃プラの分別改善で再資源化率を向上</h3>
+              <p>保管容器の見直しと掲示物整備により、焼却比率を大幅に圧縮。</p>
+            </article>
+            <article class="result-card">
+              <div class="result-photo photo-store"></div>
+              <p class="result-label">多店舗展開</p>
+              <h3>店舗ごとの回収条件を一本化</h3>
+              <p>契約と帳票の窓口を一本化し、本部管理をシンプルにしました。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section photo-story">
+        <div class="container story-grid">
+          <div class="story-copy">
+            <p class="eyebrow">Visual Direction</p>
+            <h2>写真で「設備・人・現場」を見せると、リサイクル事業の説得力が出る</h2>
+            <p>
+              `mikan_LP` のように、テキストだけでなくビジュアル面で信頼感を作るための帯セクションです。
+              実案件ではここに自社設備、回収風景、スタッフ写真を差し替える想定です。
+            </p>
+            <ul class="check-list">
+              <li>選別・圧縮・保管ヤードの設備写真</li>
+              <li>回収車両や積み込み風景</li>
+              <li>スタッフ対応や現場確認の様子</li>
+            </ul>
+          </div>
+
+          <div class="story-visual">
+            <div class="story-main-photo photo-workers"></div>
+            <div class="story-sub-photo photo-bales"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section flow-section" id="flow">
+        <div class="container">
+          <div class="section-heading center">
+            <p class="eyebrow">Flow</p>
+            <h2>相談から導入までの流れ</h2>
+            <p>参考LPの「4ステップ構成」を引き継ぎ、問い合わせ後の動きを明確にしています。</p>
+          </div>
+
+          <div class="flow-grid">
+            <article class="step-card">
+              <span>1</span>
+              <h3>お問い合わせ</h3>
+              <p>排出品目、頻度、拠点数、ご相談背景をフォームまたは電話で共有いただきます。</p>
+            </article>
+            <article class="step-card">
+              <span>2</span>
+              <h3>現状確認</h3>
+              <p>必要に応じて現地確認を行い、保管方法や搬出経路、帳票運用を整理します。</p>
+            </article>
+            <article class="step-card">
+              <span>3</span>
+              <h3>ご提案・お見積もり</h3>
+              <p>回収方法、再資源化方針、費用感、開始スケジュールをわかりやすく提示します。</p>
+            </article>
+            <article class="step-card">
+              <span>4</span>
+              <h3>回収開始</h3>
+              <p>契約締結後、定期回収またはスポット対応を開始。初回後の改善提案も継続します。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section faq-section" id="faq">
+        <div class="container narrow">
+          <div class="section-heading center">
+            <p class="eyebrow">FAQ</p>
+            <h2>よくあるご質問</h2>
+          </div>
+
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>少量の回収でも依頼できますか？</summary>
+              <p>可能です。スポット回収か定期回収かを含め、量とエリアに応じて最適な方法をご案内します。</p>
+            </details>
+            <details class="faq-item">
+              <summary>見積もり前に現地確認は必要ですか？</summary>
+              <p>品目と量が明確であれば概算見積もりは可能です。搬出条件が複雑な場合は現地確認をおすすめします。</p>
+            </details>
+            <details class="faq-item">
+              <summary>マニフェストや契約書の整備も相談できますか？</summary>
+              <p>はい。法令に基づく運用フローの整理や、既存運用の見直しもあわせて支援します。</p>
+            </details>
+            <details class="faq-item">
+              <summary>このサイトはそのまま静的HTMLとして使えますか？</summary>
+              <p>はい。`index.html` `style.css` `script.js` の3ファイルで完結する構成です。</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <section class="section cta-section" id="contact">
+        <div class="container cta-box">
+          <div class="cta-copy">
+            <p class="eyebrow">Contact</p>
+            <h2>まずは、回収したいものと頻度だけでも大丈夫です。</h2>
+            <p>
+              静的サイトでも運用できるように、このページではメールソフトを起動する方式を採用しています。
+              会社名、ご相談内容、回収品目、頻度などを本文に入れた状態でメール作成画面へ進めます。
+            </p>
+          </div>
+
+          <form class="contact-form" data-mailto-form data-recipient="info@example.com">
+            <label>
+              会社名
+              <input type="text" name="company" placeholder="例：株式会社サンプル">
+            </label>
+            <label>
+              メールアドレス
+              <input type="email" name="email" placeholder="info@example.com">
+            </label>
+            <label>
+              ご相談内容
+              <textarea name="message" rows="5" placeholder="回収品目、量、拠点数、開始希望時期など"></textarea>
+            </label>
+            <button type="submit" class="button button-primary">メールソフトを開く</button>
+            <p class="contact-note">
+              送信先: <a href="mailto:info@example.com">info@example.com</a>
+            </p>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a class="brand footer-brand" href="#top">
+            <span class="brand-mark">GC</span>
+            <span class="brand-text">
+              <strong>Green Cycle Works</strong>
+              <small>Dummy Corporate Website</small>
+            </span>
+          </a>
+          <p class="footer-copy">
+            リサイクル事業者向けのコーポレートサイト兼LPを想定したダミー実装です。
+            企業案内、事業紹介、問い合わせ獲得の導線を1ページに整理しています。
+          </p>
+        </div>
+
+        <div class="footer-links">
+          <a href="#services">事業案内</a>
+          <a href="#strengths">選ばれる理由</a>
+          <a href="#flow">導入の流れ</a>
+          <a href="#faq">FAQ</a>
+          <a href="#contact">お問い合わせ</a>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <p>&copy; <span id="year"></span> Green Cycle Works. All rights reserved.</p>
+        <a href="#top">Back to top</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>
