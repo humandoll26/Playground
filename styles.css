@@ -699,6 +699,17 @@ a {
   margin: 14px 0 0;
 }
 
+.faq-list p a {
+  color: #d84b39;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.faq-list p a:hover {
+  color: #a93224;
+}
+
 .contact-section {
   display: grid;
   grid-template-columns: 1fr 380px;
