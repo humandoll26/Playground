@@ -70,13 +70,12 @@ a {
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 38px;
   height: 38px;
   border-radius: 14px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent), #5f90f8);
+  object-fit: cover;
+  box-shadow: 0 10px 24px rgba(21, 36, 66, 0.14);
 }
 
 .site-nav {
@@ -625,6 +624,25 @@ a {
   margin-top: 24px;
 }
 
+.pricing-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pricing-notes li {
+  padding: 8px 12px;
+  border: 1px solid rgba(43, 109, 243, 0.12);
+  border-radius: 999px;
+  background: rgba(243, 247, 255, 0.92);
+  color: var(--accent-deep);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .pricing-cta {
   display: flex;
   justify-content: space-between;
@@ -666,6 +684,15 @@ a {
   margin: 0 0 12px;
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 1;
+}
+
+.price-tax {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 0.36em;
+  font-weight: 700;
+  vertical-align: middle;
 }
 
 .price-card p {
@@ -746,13 +773,13 @@ a {
   width: 100%;
 }
 
-.reveal {
+body:not(.no-js) .reveal {
   opacity: 0;
   transform: translateY(24px);
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
 
-.reveal.is-visible {
+body:not(.no-js) .reveal.is-visible {
   opacity: 1;
   transform: translateY(0);
 }
@@ -777,7 +804,7 @@ a {
     margin-left: auto;
   }
 
-  .site-nav a:not(.nav-cta) {
+  .site-nav a:not(.nav-cta):not([href="#faq"]) {
     display: none;
   }
 
