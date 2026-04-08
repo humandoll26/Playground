@@ -1,4 +1,4 @@
-import './style.css'
+// CSS is now loaded via index.html link tag for GitHub Pages compatibility
 
 document.addEventListener('DOMContentLoaded', () => {
   // Mobile Menu Toggle
