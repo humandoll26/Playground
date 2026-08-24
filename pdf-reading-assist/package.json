@@ -27,6 +27,7 @@
       "index.html",
       "app.js",
       "styles.css",
+      "favicon.svg",
       "vendor/**/*",
       "desktop/**/*",
       "package.json"
