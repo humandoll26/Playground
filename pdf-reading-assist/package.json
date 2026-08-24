@@ -1,0 +1,58 @@
+{
+  "name": "pdf-reading-assist",
+  "version": "1.0.0",
+  "description": "読書ガイドと行スナップで長いPDFを読みやすくするデスクトップアプリ",
+  "main": "desktop/main.cjs",
+  "author": "humandoll26",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "desktop": "electron .",
+    "dist": "electron-builder --win nsis portable",
+    "dist:installer": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "43.4.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "io.github.humandoll26.pdf-reading-assist",
+    "productName": "PDF読書アシスト",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "app.js",
+      "styles.css",
+      "vendor/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PDF読書アシスト",
+      "artifactName": "PDF-Reading-Assist-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "PDF-Reading-Assist-Portable-${version}-${arch}.${ext}"
+    }
+  }
+}
