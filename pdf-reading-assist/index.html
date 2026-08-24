@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f3ea">
+  <title>Reading Assist — PDF読書アシスト</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand" aria-label="Reading Assist">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 4.5h5.2c1 0 1.8.8 1.8 1.8v13.2c0-1-.8-1.8-1.8-1.8H5V4.5Zm14 0h-5.2c-1 0-1.8.8-1.8 1.8v13.2c0-1 .8-1.8 1.8-1.8H19V4.5Z"/></svg>
+        </span>
+        <span><strong>Reading Assist</strong><small>PDF読書アシスト</small></span>
+      </div>
+
+      <div class="header-actions">
+        <label class="button primary" for="file-input">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+          <span>PDFを開く</span>
+        </label>
+        <input id="file-input" type="file" accept="application/pdf,.pdf" hidden>
+        <button id="guide-toggle" class="button icon-text" type="button" aria-pressed="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16M4 16h16"/></svg>
+          <span>ガイド</span>
+        </button>
+        <button id="settings-open" class="button icon-only" type="button" aria-label="設定を開く">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+        </button>
+        <button id="header-hide" class="button icon-only" type="button" aria-label="ヘッダーを隠す" title="ヘッダーを隠す">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 14 5-5 5 5"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <button id="header-show" class="header-show" type="button" aria-label="ヘッダーを表示" title="ヘッダーを表示" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+    </button>
+
+    <main class="workspace">
+      <section id="empty-state" class="empty-state" aria-labelledby="empty-title">
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="PDFを選択またはドロップ">
+          <div class="paper-stack" aria-hidden="true">
+            <span></span><span></span><span class="paper-line"></span>
+          </div>
+          <p class="eyebrow">YOUR READING SPACE</p>
+          <h1 id="empty-title">行を見失わない、<br>静かなPDFリーダー。</h1>
+          <p class="lead">半透明の読書ガイドが、いま読んでいる場所をそっと示します。PDFは端末の外へ送信されません。</p>
+          <span class="button primary large">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>
+            PDFを選ぶ
+          </span>
+          <p class="drop-hint">または、ここにドラッグ＆ドロップ</p>
+          <div class="privacy-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5V10Z"/></svg>
+            ブラウザ内でのみ処理します
+          </div>
+        </div>
+      </section>
+
+      <section id="reader" class="reader" hidden aria-label="PDFリーダー">
+        <div class="reader-toolbar">
+          <div class="file-meta">
+            <span class="pdf-badge">PDF</span>
+            <span id="file-name" class="file-name">document.pdf</span>
+            <span id="line-status" class="line-status" hidden></span>
+          </div>
+          <div class="page-controls" aria-label="ページ操作">
+            <button id="prev-page" class="tool-button" type="button" aria-label="前のページ">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 6-6 6 6 6"/></svg>
+            </button>
+            <span><strong id="current-page">1</strong> / <span id="page-count">1</span></span>
+            <button id="next-page" class="tool-button" type="button" aria-label="次のページ">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"/></svg>
+            </button>
+          </div>
+          <div class="zoom-controls" aria-label="ズーム操作">
+            <button id="zoom-out" class="tool-button" type="button" aria-label="縮小">−</button>
+            <span id="zoom-value">100%</span>
+            <button id="zoom-in" class="tool-button" type="button" aria-label="拡大">＋</button>
+          </div>
+        </div>
+
+        <div id="viewer" class="viewer" tabindex="0">
+          <div id="page-scroll" class="page-scroll">
+            <div id="pages" class="pages"></div>
+          </div>
+          <div id="focus-top" class="focus-mask focus-top" aria-hidden="true"></div>
+          <div id="guide" class="reading-guide" role="slider" aria-label="読書ガイド位置" aria-valuemin="0" aria-valuemax="100" aria-valuenow="35" tabindex="0">
+            <span class="guide-grip" aria-hidden="true"></span>
+          </div>
+          <div id="focus-bottom" class="focus-mask focus-bottom" aria-hidden="true"></div>
+          <div id="loading" class="loading" hidden>
+            <span class="spinner"></span><span>PDFを読み込んでいます</span>
+          </div>
+        </div>
+
+        <div class="line-controls" aria-label="読書ガイド操作">
+          <button id="line-up" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+            前の行
+          </button>
+          <span class="line-help">ホイール・↑ ↓ キーで行移動 ・ Alt＋ホイールで通常スクロール</span>
+          <button id="line-down" type="button">次の行
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="settings-backdrop" class="backdrop" hidden></div>
+  <aside id="settings-panel" class="settings-panel" aria-labelledby="settings-title" aria-hidden="true">
+    <div class="settings-header">
+      <div><p class="eyebrow">READING GUIDE</p><h2 id="settings-title">ガイド設定</h2></div>
+      <button id="settings-close" class="button icon-only" type="button" aria-label="設定を閉じる">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="setting-group">
+      <label for="guide-height"><span>ガイドの高さ</span><output id="guide-height-value">32px</output></label>
+      <input id="guide-height" type="range" min="20" max="72" step="2" value="32">
+    </div>
+    <div class="setting-group">
+      <label for="guide-opacity"><span>透明度</span><output id="guide-opacity-value">28%</output></label>
+      <input id="guide-opacity" type="range" min="10" max="60" step="1" value="28">
+    </div>
+    <div class="setting-group">
+      <span class="setting-label">ガイドの色</span>
+      <div class="color-options" role="radiogroup" aria-label="ガイドの色">
+        <button class="color-chip active" type="button" data-color="#e9a23b" style="--chip:#e9a23b" aria-label="アンバー" aria-pressed="true"></button>
+        <button class="color-chip" type="button" data-color="#67a68f" style="--chip:#67a68f" aria-label="グリーン" aria-pressed="false"></button>
+        <button class="color-chip" type="button" data-color="#6c8fc7" style="--chip:#6c8fc7" aria-label="ブルー" aria-pressed="false"></button>
+        <button class="color-chip" type="button" data-color="#b787b6" style="--chip:#b787b6" aria-label="パープル" aria-pressed="false"></button>
+      </div>
+    </div>
+    <div class="setting-group">
+      <span class="setting-label">移動量</span>
+      <div class="segmented" role="group" aria-label="ガイド移動量">
+        <button type="button" data-step="24">24px</button>
+        <button class="active" type="button" data-step="32">32px</button>
+        <button type="button" data-step="40">40px</button>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <div><strong>行スナップ</strong><small>キーやホイールで検出した本文行へ移動します</small></div>
+      <label class="switch"><input id="line-snap" type="checkbox" checked><span></span></label>
+    </div>
+    <div class="toggle-row">
+      <div><strong>フォーカスモード</strong><small>ガイド外を少し暗くします</small></div>
+      <label class="switch"><input id="focus-mode" type="checkbox" checked><span></span></label>
+    </div>
+    <div class="toggle-row">
+      <div><strong>読書位置を保存</strong><small>この端末のブラウザに保存します</small></div>
+      <label class="switch"><input id="save-position" type="checkbox" checked><span></span></label>
+    </div>
+    <p class="settings-footnote">設定と読書位置は、このブラウザ内だけに保存されます。</p>
+  </aside>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./vendor/pdf.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
