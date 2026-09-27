@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>作業完了報告書・写真台帳</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    :root {
+      color-scheme: light;
+      --ink: #111;
+      --line: #777;
+      --soft-line: #b7b7b7;
+      --paper: #fff;
+      --screen: #e9eaec;
+      --panel: #f5f5f5;
+      --focus: #145da0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--screen);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--screen);
+      font-family: "Yu Gothic", "YuGothic", "Meiryo", sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(390px, 460px) minmax(0, 1fr);
+      align-items: start;
+      gap: 24px;
+      width: min(1580px, calc(100% - 32px));
+      margin: 24px auto;
+    }
+
+    .input-panel {
+      position: sticky;
+      top: 16px;
+      width: 100%;
+      max-height: calc(100vh - 32px);
+      margin: 0;
+      padding: 24px;
+      overflow-y: auto;
+      border: 1px solid #c8c8c8;
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .print-button {
+      flex: 0 0 auto;
+      min-height: 44px;
+      padding: 10px 20px;
+      border: 2px solid var(--ink);
+      border-radius: 4px;
+      color: #fff;
+      background: var(--ink);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .print-button:hover {
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .form-section + .form-section {
+      margin-top: 24px;
+    }
+
+    .form-heading {
+      margin: 0 0 12px;
+      padding: 8px 10px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 16px;
+    }
+
+    .form-field {
+      display: grid;
+      align-content: start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .form-field.span-2 {
+      grid-column: 1 / -1;
+    }
+
+    .form-field.span-4 {
+      grid-column: 1 / -1;
+    }
+
+    .form-field > span,
+    .form-label {
+      font-weight: 800;
+    }
+
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid #777;
+      border-radius: 3px;
+      color: var(--ink);
+      background: #fff;
+    }
+
+    .form-field textarea {
+      min-height: 82px;
+      resize: vertical;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus,
+    .print-button:focus-visible {
+      outline: 3px solid rgba(20, 93, 160, 0.28);
+      outline-offset: 1px;
+      border-color: var(--focus);
+    }
+
+    .photo-input-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
+    .photo-input-card {
+      min-width: 0;
+      padding: 14px;
+      border: 1px solid #999;
+      background: var(--panel);
+    }
+
+    .photo-input-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .photo-input-card .form-field + .form-field {
+      margin-top: 10px;
+    }
+
+    .photo-input-card input[type="file"] {
+      padding: 7px;
+      background: #fff;
+    }
+
+    .preview-column {
+      min-width: 0;
+    }
+
+    .preview-heading {
+      width: 100%;
+      margin: 0 0 12px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .preview-stage {
+      display: grid;
+      justify-items: center;
+      gap: 24px;
+      padding: 0 0 40px;
+      overflow-x: auto;
+    }
+
+    .sheet {
+      position: relative;
+      width: 210mm;
+      height: 297mm;
+      padding: 12mm;
+      overflow: hidden;
+      color: #000;
+      background: #fff;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .sheet:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    .report-title {
+      margin: 0 0 8mm;
+      padding: 0 0 3.2mm;
+      border-bottom: 0.55mm solid #000;
+      font-size: 24pt;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: 0.05em;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 2.6mm;
+    }
+
+    .report-field {
+      min-width: 0;
+      height: 14mm;
+      padding: 2mm 2.5mm 1.5mm;
+      border: 0.25mm solid var(--line);
+      background: #fff;
+    }
+
+    .report-field.full {
+      grid-column: 1 / -1;
+    }
+
+    .report-label {
+      display: block;
+      margin-bottom: 1.3mm;
+      font-size: 8.6pt;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .report-value {
+      display: block;
+      min-width: 0;
+      min-height: 4.7mm;
+      overflow: hidden;
+      border-bottom: 0.2mm solid var(--line);
+      font-size: 9.2pt;
+      line-height: 1.25;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .report-value.small-text {
+      font-size: 8pt;
+    }
+
+    .band-heading {
+      margin: 5.5mm 0 3mm;
+      padding: 2mm 2.8mm;
+      color: #fff;
+      background: #000;
+      font-size: 10pt;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    .lined-area {
+      height: 38mm;
+      padding: 2.4mm 3mm;
+      overflow: hidden;
+      border: 0.25mm solid var(--line);
+      background-color: #fff;
+      background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        transparent 7.3mm,
+        var(--soft-line) 7.3mm,
+        var(--soft-line) 7.5mm
+      );
+      font-size: 9pt;
+      line-height: 7.5mm;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .lined-area.small-text {
+      font-size: 7.6pt;
+    }
+
+    .compact-row {
+      margin-top: 4mm;
+    }
+
+    .contractor-grid .report-field {
+      height: 14mm;
+    }
+
+    .photo-page .report-title {
+      margin-bottom: 4mm;
+    }
+
+    .project-row {
+      display: grid;
+      grid-template-columns: 16mm 1fr;
+      align-items: end;
+      min-height: 9mm;
+      margin-bottom: 4mm;
+    }
+
+    .project-row .report-label {
+      margin: 0 0 1.4mm;
+    }
+
+    .project-row .report-value {
+      min-height: 6mm;
+      padding: 0 1mm 1mm;
+      font-size: 9pt;
+    }
+
+    .photo-ledger-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(2, 1fr);
+      gap: 3mm;
+      height: 224mm;
+    }
+
+    .photo-card {
+      display: grid;
+      grid-template-rows: 7mm auto 8mm 14mm;
+      min-width: 0;
+      min-height: 0;
+      padding: 2.2mm;
+      overflow: hidden;
+      border: 0.25mm solid var(--line);
+      background: #fff;
+    }
+
+    .photo-card-head {
+      display: grid;
+      grid-template-columns: auto auto minmax(0, 1fr);
+      align-items: start;
+      gap: 2.2mm;
+      min-width: 0;
+      line-height: 1;
+    }
+
+    .photo-number {
+      font-size: 9.3pt;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .category-label {
+      padding-top: 0.35mm;
+      font-size: 6.4pt;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .category-value {
+      min-width: 0;
+      min-height: 4mm;
+      padding: 0.3mm 0.5mm 0;
+      overflow: hidden;
+      border-bottom: 0.2mm solid var(--line);
+      font-size: 6.4pt;
+      line-height: 1.1;
+      text-align: center;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .photo-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      border: 0.25mm solid var(--line);
+      background: #fff;
+    }
+
+    .photo-frame img {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .photo-frame.has-image img {
+      display: block;
+    }
+
+    .photo-placeholder {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 3mm;
+      color: #777;
+      font-size: 7pt;
+      text-align: center;
+    }
+
+    .photo-frame.has-image .photo-placeholder {
+      display: none;
+    }
+
+    .card-line {
+      display: grid;
+      grid-template-columns: 16mm minmax(0, 1fr);
+      align-items: end;
+      min-width: 0;
+      gap: 1.5mm;
+    }
+
+    .card-line-label {
+      padding-bottom: 1.1mm;
+      font-size: 6.6pt;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .card-line-value {
+      min-width: 0;
+      min-height: 5mm;
+      padding: 0 0.5mm 0.8mm;
+      overflow: hidden;
+      border-bottom: 0.2mm solid var(--line);
+      font-size: 7pt;
+      line-height: 1.18;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .description-row {
+      align-items: start;
+      padding-top: 1mm;
+    }
+
+    .description-row .card-line-label {
+      padding-top: 0.7mm;
+    }
+
+    .description-row .card-line-value {
+      height: 12mm;
+      padding-top: 0.6mm;
+      background-image: linear-gradient(
+        to bottom,
+        transparent 5.5mm,
+        var(--soft-line) 5.5mm,
+        var(--soft-line) 5.7mm,
+        transparent 5.7mm
+      );
+    }
+
+    @media (max-width: 1180px) {
+      .workspace {
+        display: block;
+        width: min(920px, calc(100% - 32px));
+      }
+
+      .input-panel {
+        position: static;
+        max-height: none;
+        margin-bottom: 28px;
+        overflow-y: visible;
+      }
+
+      .photo-input-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .input-panel {
+        width: 100%;
+        margin: 0 0 24px;
+        padding: 16px;
+      }
+
+      .workspace {
+        width: calc(100% - 20px);
+        margin: 10px auto;
+      }
+
+      .panel-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .form-grid,
+      .photo-input-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-field.span-2,
+      .form-field.span-4 {
+        grid-column: auto;
+      }
+
+      .preview-heading {
+        width: 100%;
+      }
+
+      .preview-stage {
+        justify-items: start;
+      }
+    }
+
+    @media print {
+      html,
+      body {
+        width: 210mm;
+        margin: 0;
+        padding: 0;
+        background: #fff;
+      }
+
+      .input-panel,
+      .preview-heading {
+        display: none !important;
+      }
+
+      .workspace,
+      .preview-column {
+        display: block;
+        width: 210mm;
+        margin: 0;
+        padding: 0;
+      }
+
+      .preview-stage {
+        display: block;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
+      }
+
+      .sheet {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 12mm;
+        overflow: hidden;
+        box-shadow: none;
+        page-break-inside: avoid;
+        break-inside: avoid-page;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="workspace">
+      <section class="input-panel" aria-labelledby="input-title">
+      <div class="panel-header">
+        <h1 class="panel-title" id="input-title">作業完了報告書・写真台帳</h1>
+        <button class="print-button" id="print-button" type="button">PDFとして保存</button>
+      </div>
+
+      <section class="form-section" aria-labelledby="page-one-input">
+        <h2 class="form-heading" id="page-one-input">作業完了報告書</h2>
+        <div class="form-grid">
+          <label class="form-field span-2">
+            <span>発注者（施主名）</span>
+            <input type="text" data-target="client-output">
+          </label>
+          <label class="form-field span-2">
+            <span>No.</span>
+            <input type="text" data-target="number-output">
+          </label>
+          <label class="form-field span-2">
+            <span>作業名（場所）</span>
+            <input type="text" data-target="project-place-output">
+          </label>
+          <label class="form-field span-2">
+            <span>作成日</span>
+            <input type="date" data-target="created-date-output" data-date-format>
+          </label>
+          <label class="form-field span-4">
+            <span>作業場所</span>
+            <input type="text" data-target="site-output">
+          </label>
+          <label class="form-field span-2">
+            <span>着工日</span>
+            <input type="date" data-target="start-date-output" data-date-format>
+          </label>
+          <label class="form-field span-2">
+            <span>完了日</span>
+            <input type="date" data-target="completion-date-output" data-date-format>
+          </label>
+          <label class="form-field span-4">
+            <span>作業内容</span>
+            <textarea data-target="work-details-output"></textarea>
+          </label>
+          <label class="form-field span-2">
+            <span>請負金額（税別）</span>
+            <input type="text" inputmode="numeric" data-target="amount-output">
+          </label>
+          <label class="form-field span-2">
+            <span>備考</span>
+            <input type="text" data-target="remarks-output">
+          </label>
+          <label class="form-field span-2">
+            <span>会社名</span>
+            <input type="text" data-target="company-output">
+          </label>
+          <label class="form-field span-2">
+            <span>担当者名</span>
+            <input type="text" data-target="manager-output">
+          </label>
+          <label class="form-field span-4">
+            <span>TEL / FAX</span>
+            <input type="text" inputmode="tel" data-target="contact-output">
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section" aria-labelledby="page-two-input">
+        <h2 class="form-heading" id="page-two-input">作業完了写真台帳</h2>
+        <div class="form-grid" style="margin-bottom: 16px;">
+          <label class="form-field span-4">
+            <span>作業名</span>
+            <input type="text" data-target="ledger-project-output">
+          </label>
+        </div>
+        <div class="photo-input-grid" id="photo-input-grid"></div>
+      </section>
+      </section>
+
+      <section class="preview-column" aria-labelledby="preview-title">
+        <h2 class="preview-heading" id="preview-title">帳票プレビュー</h2>
+
+        <div class="preview-stage" id="preview-stage">
+      <section class="sheet report-page" aria-label="作業完了報告書">
+        <h1 class="report-title">作業完了報告書</h1>
+
+        <div class="report-grid">
+          <div class="report-field">
+            <span class="report-label">発注者（施主名）</span>
+            <span class="report-value" id="client-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">No.</span>
+            <span class="report-value" id="number-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">作業名（場所）</span>
+            <span class="report-value" id="project-place-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">作成日</span>
+            <span class="report-value" id="created-date-output"></span>
+          </div>
+          <div class="report-field full">
+            <span class="report-label">作業場所</span>
+            <span class="report-value" id="site-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">着工日</span>
+            <span class="report-value" id="start-date-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">完了日</span>
+            <span class="report-value" id="completion-date-output"></span>
+          </div>
+        </div>
+
+        <h2 class="band-heading">作業内容</h2>
+        <div class="lined-area" id="work-details-output"></div>
+
+        <div class="report-grid compact-row">
+          <div class="report-field">
+            <span class="report-label">請負金額（税別）</span>
+            <span class="report-value" id="amount-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">備考</span>
+            <span class="report-value" id="remarks-output"></span>
+          </div>
+        </div>
+
+        <h2 class="band-heading">本作業者</h2>
+        <div class="report-grid contractor-grid">
+          <div class="report-field">
+            <span class="report-label">会社名</span>
+            <span class="report-value" id="company-output"></span>
+          </div>
+          <div class="report-field">
+            <span class="report-label">担当者名</span>
+            <span class="report-value" id="manager-output"></span>
+          </div>
+          <div class="report-field full">
+            <span class="report-label">TEL / FAX</span>
+            <span class="report-value" id="contact-output"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sheet photo-page" aria-label="作業完了写真台帳">
+        <h1 class="report-title">作業完了写真台帳</h1>
+        <div class="project-row">
+          <span class="report-label">作業名</span>
+          <span class="report-value" id="ledger-project-output"></span>
+        </div>
+        <div class="photo-ledger-grid" id="photo-ledger-grid"></div>
+      </section>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      const photoInputGrid = document.getElementById('photo-input-grid');
+      const photoLedgerGrid = document.getElementById('photo-ledger-grid');
+      const objectUrls = new Map();
+
+      const inputCards = [];
+      const previewCards = [];
+
+      for (let index = 1; index <= 6; index += 1) {
+        inputCards.push(`
+          <section class="photo-input-card" aria-labelledby="photo-input-title-${index}">
+            <h3 id="photo-input-title-${index}">写真 ${index}</h3>
+            <label class="form-field">
+              <span>撮影区分</span>
+              <select data-target="photo-category-${index}">
+                <option value=""></option>
+                <option value="本作業前">本作業前</option>
+                <option value="本作業後">本作業後</option>
+              </select>
+            </label>
+            <label class="form-field">
+              <span>写真</span>
+              <input type="file" accept="image/*" capture="environment" data-photo-input="${index}">
+            </label>
+            <label class="form-field">
+              <span>撮影箇所</span>
+              <input type="text" data-target="photo-location-${index}">
+            </label>
+            <label class="form-field">
+              <span>説明</span>
+              <textarea data-target="photo-description-${index}"></textarea>
+            </label>
+          </section>
+        `);
+
+        previewCards.push(`
+          <article class="photo-card">
+            <div class="photo-card-head">
+              <span class="photo-number">写真 ${index}</span>
+              <span class="category-label">撮影区分</span>
+              <span class="category-value" id="photo-category-${index}"></span>
+            </div>
+            <div class="photo-frame" id="photo-frame-${index}">
+              <img id="photo-image-${index}" alt="写真 ${index}">
+              <span class="photo-placeholder">写真を貼り付けてください</span>
+            </div>
+            <div class="card-line">
+              <span class="card-line-label">撮影箇所</span>
+              <span class="card-line-value" id="photo-location-${index}"></span>
+            </div>
+            <div class="card-line description-row">
+              <span class="card-line-label">説明</span>
+              <span class="card-line-value" id="photo-description-${index}"></span>
+            </div>
+          </article>
+        `);
+      }
+
+      photoInputGrid.innerHTML = inputCards.join('');
+      photoLedgerGrid.innerHTML = previewCards.join('');
+
+      function formatDate(value) {
+        if (!value) return '';
+        const parts = value.split('-');
+        if (parts.length !== 3) return value;
+        return `${Number(parts[0])}年${Number(parts[1])}月${Number(parts[2])}日`;
+      }
+
+      function fitOutput(output) {
+        const length = output.textContent.trim().length;
+        output.classList.toggle('small-text', length > 38);
+      }
+
+      function updateOutput(input) {
+        const output = document.getElementById(input.dataset.target);
+        if (!output) return;
+        output.textContent = input.hasAttribute('data-date-format')
+          ? formatDate(input.value)
+          : input.value;
+        fitOutput(output);
+      }
+
+      document.querySelectorAll('[data-target]').forEach((input) => {
+        const eventName = input.tagName === 'SELECT' ? 'change' : 'input';
+        input.addEventListener(eventName, () => updateOutput(input));
+        updateOutput(input);
+      });
+
+      document.querySelectorAll('[data-photo-input]').forEach((input) => {
+        input.addEventListener('change', () => {
+          const index = input.dataset.photoInput;
+          const frame = document.getElementById(`photo-frame-${index}`);
+          const image = document.getElementById(`photo-image-${index}`);
+          const previousUrl = objectUrls.get(index);
+
+          if (previousUrl) {
+            URL.revokeObjectURL(previousUrl);
+            objectUrls.delete(index);
+          }
+
+          const file = input.files && input.files[0];
+          if (!file) {
+            image.removeAttribute('src');
+            frame.classList.remove('has-image');
+            return;
+          }
+
+          const objectUrl = URL.createObjectURL(file);
+          objectUrls.set(index, objectUrl);
+          image.src = objectUrl;
+          frame.classList.add('has-image');
+        });
+      });
+
+      document.getElementById('print-button').addEventListener('click', () => {
+        window.print();
+      });
+
+      window.addEventListener('beforeunload', () => {
+        objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      });
+    })();
+  </script>
+</body>
+</html>
