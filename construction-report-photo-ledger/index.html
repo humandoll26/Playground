@@ -545,9 +545,12 @@
     @media print {
       html,
       body {
-        width: 210mm;
+        width: 100%;
+        min-width: 0;
+        height: auto;
         margin: 0;
         padding: 0;
+        overflow: visible;
         background: #fff;
       }
 
@@ -559,7 +562,7 @@
       .workspace,
       .preview-column {
         display: block;
-        width: 210mm;
+        width: 100%;
         margin: 0;
         padding: 0;
       }
@@ -572,14 +575,30 @@
       }
 
       .sheet {
-        width: 210mm;
-        height: 297mm;
-        margin: 0;
-        padding: 12mm;
+        width: 184mm;
+        max-width: 100%;
+        height: auto;
+        min-height: 0;
+        margin: 0 auto;
+        padding: 7mm;
         overflow: hidden;
         box-shadow: none;
-        page-break-inside: avoid;
-        break-inside: avoid-page;
+        page-break-before: auto;
+        break-before: auto;
+        page-break-after: auto;
+        break-after: auto;
+        page-break-inside: auto;
+        break-inside: auto;
+      }
+
+      .sheet + .sheet {
+        page-break-before: always;
+        break-before: page;
+      }
+
+      .photo-ledger-grid {
+        height: 198mm;
+        gap: 2.5mm;
       }
     }
   </style>
