@@ -170,7 +170,6 @@
       box-shadow: 0 16px 44px rgba(13, 41, 49, .24);
     }
     body.toolbar-docked .workspace { padding-bottom: 112px; }
-    body.toolbar-docked .timeline-scroller { padding-bottom: 78px; }
     body.toolbar-docked .toast-region { bottom: 84px; }
     .button {
       display: inline-flex;
@@ -212,7 +211,7 @@
     .legend-swatch.important { color: #b85741; background: repeating-linear-gradient(135deg,#f7dfd9 0 7px,#dea292 7px 8px); }
     .legend-swatch.break { color: #c58520; background-color: #fff0cc; background-image: radial-gradient(#dfa94d 1px, transparent 1px); background-size: 8px 8px; }
 
-    .timeline-scroller { width: 100%; max-height: min(72vh, 860px); overflow: auto; background: #f8faf9; overscroll-behavior: contain; }
+    .timeline-scroller { width: 100%; overflow-x: auto; overflow-y: hidden; background: #f8faf9; overscroll-behavior-x: contain; }
     .timeline-grid {
       position: relative;
       display: grid;
