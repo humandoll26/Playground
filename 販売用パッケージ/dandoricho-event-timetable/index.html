@@ -683,9 +683,9 @@
       function loadUiState() {
         try {
           const saved = JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || "{}");
-          return { settingsCollapsed:Boolean(saved.settingsCollapsed), toolbarDocked:Boolean(saved.toolbarDocked) };
+          return { settingsCollapsed:Boolean(saved.settingsCollapsed), toolbarDocked:saved.toolbarDocked !== false };
         } catch (_) {
-          return { settingsCollapsed:false, toolbarDocked:false };
+          return { settingsCollapsed:false, toolbarDocked:true };
         }
       }
       function saveUiState() {
