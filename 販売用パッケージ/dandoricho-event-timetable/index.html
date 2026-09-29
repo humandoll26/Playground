@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17343d">
+  <meta name="description" content="イベントの時間・担当・工程を一枚のタイムラインで作成し、保存・JSONバックアップ・A4横印刷できるオフラインツールです。">
+  <title>段取り帖 - イベント・タイムスケジュール</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%2317343d'/%3E%3Cpath d='M17 18h30v29H17zM17 27h30M26 18v29M36 18v29' fill='none' stroke='%23fff' stroke-width='3'/%3E%3Cpath d='M17 35h30' stroke='%23f4a261' stroke-width='5'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --navy: #17343d;
+      --navy-2: #234751;
+      --teal: #2b7a78;
+      --teal-soft: #dff1ef;
+      --ink: #17313a;
+      --muted: #697d83;
+      --line: #cbd7da;
+      --line-strong: #8aa0a6;
+      --paper: #ffffff;
+      --canvas: #eef3f2;
+      --panel: #f8faf9;
+      --accent: #e0785f;
+      --accent-dark: #b6533e;
+      --amber: #cf8b21;
+      --blue: #557aa5;
+      --danger: #b34848;
+      --success: #347e68;
+      --row-h: 36px;
+      --header-h: 58px;
+      --shadow: 0 18px 48px rgba(23, 52, 61, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-width: 320px; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "BIZ UDPGothic", "Yu Gothic UI", "Hiragino Sans", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 4% 0%, rgba(43, 122, 120, .13), transparent 32rem),
+        linear-gradient(180deg, #f7f9f7 0, #edf2f1 100%);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible,
+    [role="button"]:focus-visible {
+      outline: 3px solid rgba(43, 122, 120, .28);
+      outline-offset: 2px;
+    }
+    [hidden] { display: none !important; }
+
+    .app-shell { min-height: 100vh; }
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px clamp(18px, 3vw, 42px);
+      color: #fff;
+      background: rgba(23, 52, 61, .96);
+      border-bottom: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 8px 28px rgba(11, 31, 38, .16);
+      backdrop-filter: blur(12px);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--navy);
+      background: #f5b45b;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+    }
+    .brand-mark svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; }
+    .brand-copy { min-width: 0; }
+    .brand-copy strong { display: block; font-size: 1.05rem; letter-spacing: .04em; }
+    .brand-copy small { display: block; margin-top: 2px; color: #bdd0d4; font-size: .73rem; letter-spacing: .08em; }
+    .save-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      color: #dbe7e9;
+      font-size: .82rem;
+      font-weight: 700;
+    }
+    .save-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #7fd4ae; box-shadow: 0 0 0 4px rgba(127,212,174,.12); }
+    .save-state.is-saving::before { background: #f4bf68; }
+    .save-state.is-error::before { background: #ef8b82; }
+
+    .workspace { width: min(1760px, calc(100% - 32px)); margin: 0 auto; padding: 26px 0 44px; }
+    .hero-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+    .eyebrow { margin: 0 0 8px; color: var(--teal); font-size: .74rem; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.65rem, 3vw, 2.55rem); line-height: 1.15; letter-spacing: .025em; }
+    .lead { margin: 8px 0 0; color: var(--muted); font-size: .92rem; }
+    .local-chip { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 13px; border: 1px solid #c8d7d7; border-radius: 999px; color: #466168; background: rgba(255,255,255,.66); font-size: .78rem; font-weight: 800; }
+    .local-chip svg { width: 15px; height: 15px; fill: none; stroke: var(--success); stroke-width: 2; }
+
+    .control-panel {
+      margin-bottom: 16px;
+      border: 1px solid rgba(188, 204, 207, .9);
+      border-radius: 18px;
+      background: rgba(255,255,255,.9);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 18px 13px; border-bottom: 1px solid #e2e9e9; }
+    .panel-heading h2 { margin: 0; font-size: 1rem; }
+    .panel-heading p { margin: 3px 0 0; color: var(--muted); font-size: .76rem; }
+    .settings-grid { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(180px, 1.3fr) repeat(2, minmax(120px, .7fr)) minmax(110px, .6fr) minmax(120px, .7fr); gap: 12px; padding: 15px 18px 18px; }
+    .field { display: grid; gap: 6px; min-width: 0; }
+    .field > span, .field-label { color: #52676d; font-size: .72rem; font-weight: 900; letter-spacing: .04em; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid #c9d4d6;
+      border-radius: 10px;
+      padding: 9px 11px;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: inset 0 1px 1px rgba(18,48,56,.03);
+    }
+    .field textarea { min-height: 90px; resize: vertical; line-height: 1.55; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--teal); }
+    .settings-alert { display: none; margin: -4px 18px 16px; padding: 10px 12px; border: 1px solid #e0aaa5; border-radius: 10px; color: #8f342f; background: #fff1ef; font-size: .82rem; font-weight: 700; }
+    .settings-alert.show { display: block; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1px solid #cfdbdc;
+      border-radius: 15px;
+      background: rgba(255,255,255,.86);
+      box-shadow: 0 10px 32px rgba(24,56,65,.08);
+      overflow-x: auto;
+    }
+    .toolbar-group { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
+    .toolbar-sep { width: 1px; height: 30px; flex: 0 0 auto; background: #d9e2e3; margin: 0 2px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 38px;
+      border: 1px solid #c8d4d6;
+      border-radius: 10px;
+      padding: 8px 12px;
+      white-space: nowrap;
+      background: #fff;
+      font-size: .82rem;
+      font-weight: 850;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+    }
+    .button:hover { transform: translateY(-1px); border-color: #91a9ad; box-shadow: 0 6px 16px rgba(22,56,64,.09); }
+    .button.primary { color: #fff; border-color: var(--navy); background: var(--navy); }
+    .button.primary:hover { background: var(--navy-2); }
+    .button.accent { color: #fff; border-color: var(--teal); background: var(--teal); }
+    .button.danger { color: #9e3f3f; border-color: #e1b9b9; background: #fffafa; }
+    .button.ghost { border-color: transparent; background: transparent; box-shadow: none; }
+    .button.small { min-height: 32px; padding: 6px 9px; font-size: .75rem; }
+    .button.icon { width: 31px; min-height: 31px; padding: 0; border-radius: 8px; }
+    .button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .timeline-card { border: 1px solid #bdcbce; border-radius: 16px; background: var(--paper); box-shadow: var(--shadow); overflow: hidden; }
+    .timeline-topline { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 13px 16px; border-bottom: 1px solid #d5e0e1; background: #fbfcfc; }
+    .timeline-title { min-width: 0; }
+    .timeline-title strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .timeline-title span { display: block; margin-top: 3px; color: var(--muted); font-size: .77rem; }
+    .legend { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px 12px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; color: #52686e; font-size: .7rem; font-weight: 700; white-space: nowrap; }
+    .legend-swatch { width: 26px; height: 14px; border: 1.5px solid currentColor; border-radius: 3px; background: #edf1f1; }
+    .legend-swatch.normal { color: #466169; background: #edf1f1; }
+    .legend-swatch.logistics { color: #2f8480; background: repeating-linear-gradient(90deg,#e3f2f0 0 8px,#8bc2be 8px 9px); }
+    .legend-swatch.rehearsal { color: #587ba1; background: repeating-linear-gradient(135deg,#e6edf4 0 7px,#9eb4ca 7px 8px); }
+    .legend-swatch.important { color: #b85741; background: repeating-linear-gradient(135deg,#f7dfd9 0 7px,#dea292 7px 8px); }
+    .legend-swatch.break { color: #c58520; background-color: #fff0cc; background-image: radial-gradient(#dfa94d 1px, transparent 1px); background-size: 8px 8px; }
+
+    .timeline-scroller { width: 100%; max-height: min(72vh, 860px); overflow: auto; background: #f8faf9; overscroll-behavior: contain; }
+    .timeline-grid {
+      position: relative;
+      display: grid;
+      align-items: stretch;
+      min-width: 100%;
+      isolation: isolate;
+      background: #f4f7f6;
+    }
+    .grid-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      padding: 7px 5px;
+      color: #fff;
+      text-align: center;
+      background: var(--navy);
+      border-right: 1px solid rgba(255,255,255,.28);
+      border-bottom: 1px solid var(--navy);
+    }
+    .grid-header.time-header { left: 0; z-index: 25; }
+    .header-copy { min-width: 0; }
+    .header-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .83rem; }
+    .header-copy small { display: block; margin-top: 2px; color: #b9cccf; font-size: .59rem; letter-spacing: .06em; text-transform: uppercase; }
+    .lane-header { position: sticky; }
+    .lane-header .header-copy { padding-right: 0; }
+    .lane-actions { position: absolute; top: 3px; right: 3px; display: flex; gap: 2px; opacity: 0; transition: opacity .15s ease; }
+    .lane-header:hover .lane-actions, .lane-header:focus-within .lane-actions { opacity: 1; }
+    .lane-action { width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: 5px; color: #dce8e9; background: rgba(255,255,255,.11); font-size: .65rem; cursor: pointer; }
+    .lane-action:hover { color: #fff; background: rgba(255,255,255,.24); }
+    .lane-action:disabled { opacity: .3; cursor: not-allowed; }
+
+    .grid-cell { position: relative; min-width: 0; border-right: 1px solid var(--line-strong); border-bottom: 1px solid var(--line); background: rgba(255,255,255,.68); }
+    .grid-cell:nth-child(even) { background: rgba(245,248,247,.78); }
+    .grid-cell.interactive { cursor: crosshair; }
+    .grid-cell.interactive:hover { background: rgba(43,122,120,.09); box-shadow: inset 0 0 0 2px rgba(43,122,120,.28); }
+    .time-cell {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 6px 9px 0 4px;
+      color: #657a80;
+      background: #f4f7f6 !important;
+      border-right: 2px solid #8fa3a8;
+      font-size: .7rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .time-cell.major { color: var(--ink); font-size: .78rem; font-weight: 900; }
+    .time-cell.last::after { content: "JST"; margin-left: 4px; color: #87989c; font-size: .55rem; }
+    .empty-message { grid-column: 3 / -2; display: grid; place-items: center; color: #75878b; text-align: center; border-bottom: 1px solid var(--line); background: #f9fbfa; font-size: .82rem; }
+
+    .task-block {
+      position: relative;
+      z-index: 6;
+      min-width: 0;
+      margin: 1.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 8px;
+      border: 1.5px solid #48636a;
+      border-radius: 6px;
+      color: #183139;
+      text-align: center;
+      background: #edf1f1;
+      box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+      font-size: .72rem;
+      font-weight: 850;
+      line-height: 1.35;
+      overflow: hidden;
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+    .task-block:active { cursor: grabbing; }
+    .task-block .task-copy { overflow: hidden; text-overflow: ellipsis; }
+    .task-block .task-time { display: block; margin-top: 2px; opacity: 0; font-size: .58rem; font-weight: 700; transition: opacity .15s; }
+    .task-block:hover .task-time { opacity: .68; }
+    .task-block.category-logistics { border-color: #2f8480; background: repeating-linear-gradient(90deg,#e3f2f0 0 11px,#9bcbc7 11px 12px); }
+    .task-block.category-rehearsal { border-color: #55799f; background: repeating-linear-gradient(135deg,#e5edf5 0 8px,#a7bacd 8px 9px); }
+    .task-block.category-important { border-width: 2px; border-color: #b75842; background: repeating-linear-gradient(135deg,#f8ddd6 0 8px,#e2a897 8px 9px); font-weight: 950; }
+    .task-block.category-break { border-color: #c27e16; background-color: #fff0c9; background-image: radial-gradient(#dda94d 1px,transparent 1px); background-size: 9px 9px; }
+    .task-block.category-warning { border: 2px dashed #c0711f; background: #fff1dc; font-weight: 950; }
+    .task-block.overlap { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #cf4d4d; }
+    .task-block.overlap::after { content: "!"; position: absolute; top: 3px; right: 4px; width: 16px; height: 16px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #bd4141; font-size: .65rem; font-weight: 950; }
+    .master-task { z-index: 7; }
+    .cross-band { z-index: 8; letter-spacing: .02em; pointer-events: none; }
+    .note-card {
+      z-index: 5;
+      margin: 2px 3px;
+      display: grid;
+      grid-template-columns: 25px minmax(0,1fr);
+      align-items: start;
+      gap: 8px;
+      min-width: 0;
+      padding: 7px;
+      border: 1px solid #c6d2d5;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 2px 7px rgba(26,55,64,.07);
+      font-size: .68rem;
+      line-height: 1.42;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .note-card:hover { border-color: #8ca5aa; }
+    .note-number { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--navy-2); font-size: .64rem; font-weight: 900; }
+    .note-text { overflow: hidden; white-space: pre-wrap; }
+    .dragging-source { opacity: .28; }
+    .drag-ghost {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: .9;
+      box-shadow: 0 12px 30px rgba(18,46,54,.25);
+    }
+    .drag-ghost.invalid { color: #842d2d; border-color: #c84646; background: #fde4e1; }
+    body.is-dragging, body.is-dragging * { cursor: grabbing !important; }
+    .drag-hint { padding: 10px 15px; color: #6e8084; border-top: 1px solid #dce5e5; background: #fbfcfc; font-size: .72rem; }
+
+    dialog {
+      width: min(540px, calc(100% - 28px));
+      max-height: min(88vh, 760px);
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      color: var(--ink);
+      background: #fff;
+      box-shadow: 0 30px 90px rgba(9,32,39,.3);
+      overflow: hidden;
+    }
+    dialog::backdrop { background: rgba(9,30,37,.55); backdrop-filter: blur(3px); }
+    .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 17px 19px; color: #fff; background: var(--navy); }
+    .dialog-head h2 { margin: 0; font-size: 1.05rem; }
+    .dialog-close { width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 8px; color: #fff; background: rgba(255,255,255,.12); font-size: 1.2rem; cursor: pointer; }
+    .dialog-body { display: grid; gap: 14px; padding: 18px 19px; overflow-y: auto; }
+    .dialog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .dialog-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 13px 19px 17px; border-top: 1px solid #e2e8e9; background: #fafcfc; }
+    .dialog-actions .danger { margin-right: auto; }
+    .check-field { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; border: 1px solid #d4dfe0; border-radius: 10px; background: #f8fbfa; font-size: .8rem; line-height: 1.45; }
+    .check-field input { width: 18px; height: 18px; margin: 0; accent-color: var(--teal); }
+    .form-error { min-height: 18px; margin: 0; color: #a43f3a; font-size: .78rem; font-weight: 750; }
+
+    .toast-region { position: fixed; right: 18px; bottom: 18px; z-index: 10000; display: grid; gap: 8px; width: min(360px, calc(100% - 36px)); pointer-events: none; }
+    .toast { padding: 12px 14px; border-radius: 11px; color: #fff; background: var(--navy); box-shadow: 0 12px 32px rgba(10,35,42,.25); font-size: .82rem; font-weight: 700; animation: toast-in .2s ease both; }
+    .toast.warn { background: #925820; }
+    .toast.error { background: #963f3f; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+    .print-root { display: none; }
+
+    @media (max-width: 1120px) {
+      .settings-grid { grid-template-columns: repeat(4, minmax(130px,1fr)); }
+      .field.event-title { grid-column: span 2; }
+      .field.venue { grid-column: span 2; }
+    }
+    @media (max-width: 720px) {
+      .app-header { align-items: flex-start; padding: 12px 14px; }
+      .brand-copy small { display: none; }
+      .workspace { width: min(100% - 20px, 1760px); padding-top: 18px; }
+      .hero-row { align-items: flex-start; flex-direction: column; gap: 12px; }
+      .settings-grid { grid-template-columns: 1fr 1fr; padding: 13px; }
+      .field.event-title, .field.venue { grid-column: 1 / -1; }
+      .panel-heading { padding-inline: 13px; }
+      .timeline-topline { align-items: flex-start; flex-direction: column; }
+      .legend { justify-content: flex-start; }
+      .dialog-grid { grid-template-columns: 1fr; }
+      .button .optional-label { display: none; }
+    }
+
+    @media print {
+      @page { size: A4 landscape; margin: 7mm; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html, body { width: auto; min-width: 0; background: #fff !important; }
+      .app-shell, .toast-region, dialog { display: none !important; }
+      .print-root { display: block !important; color: #142d35; font-family: "Yu Gothic UI", "Hiragino Sans", sans-serif; }
+      .print-page { page-break-after: always; break-after: page; }
+      .print-page:last-child { page-break-after: auto; break-after: auto; }
+      .print-header { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; margin-bottom: 4mm; }
+      .print-accent { width: 25mm; height: 2.2mm; margin-bottom: 3mm; background: #2b7a78; }
+      .print-title h1 { margin: 0; font-size: 20pt; line-height: 1.1; }
+      .print-title p { margin: 2mm 0 0; color: #61757b; font-size: 7.5pt; letter-spacing: .1em; }
+      .print-page-no { align-self: start; min-width: 39mm; padding: 3mm 6mm; color: #fff; text-align: center; border-radius: 20mm; background: #17343d; font-size: 9pt; font-weight: 900; }
+      .print-meta { grid-column: 1 / -1; display: flex; align-items: center; gap: 7mm; margin-top: 2mm; font-size: 8pt; }
+      .print-meta strong { font-size: 9pt; }
+      .print-pills { display: flex; gap: 2mm; margin-left: auto; }
+      .print-pill { min-width: 25mm; padding: 2mm 4mm; border: .3mm solid #d4dfe1; border-radius: 8mm; }
+      .print-pill span { display: block; color: #718388; font-size: 5.5pt; }
+      .print-pill b { display: block; margin-top: .5mm; text-align: right; font-size: 9pt; }
+      .print-grid { display: grid; border-left: .25mm solid #82989e; border-top: .25mm solid #82989e; --print-row-h: 4.55mm; }
+      .print-grid-header { display: grid; place-items: center; padding: 1mm; color: #fff; text-align: center; background: #17343d; border-right: .25mm solid #83999e; border-bottom: .25mm solid #83999e; font-size: 6.5pt; font-weight: 900; line-height: 1.05; }
+      .print-grid-header small { display: block; margin-top: .5mm; color: #bacbce; font-size: 4.5pt; font-weight: 500; }
+      .print-cell { border-right: .25mm solid #879ba0; border-bottom: .2mm solid #cbd5d7; background: #fff; }
+      .print-time { display: flex; justify-content: flex-end; align-items: flex-start; padding: .8mm 1mm; color: #61777d; background: #f3f6f5; font-size: 5.3pt; }
+      .print-time.major { color: #19343c; font-size: 6.3pt; font-weight: 900; }
+      .print-task { z-index: 2; display: grid; place-items: center; margin: .25mm; padding: .5mm; overflow: hidden; text-align: center; border: .35mm solid #455f66; border-radius: 1mm; background: #edf1f1; font-size: 5.6pt; font-weight: 900; line-height: 1.2; }
+      .print-task.category-logistics { border-color: #2f7774; background: repeating-linear-gradient(90deg,#e6f2f1 0 2.2mm,#9ec9c6 2.2mm 2.4mm); }
+      .print-task.category-rehearsal { border-width: .45mm; border-color: #55779b; background: repeating-linear-gradient(135deg,#e6edf4 0 2mm,#a8bbcd 2mm 2.25mm); }
+      .print-task.category-important { border-width: .55mm; border-color: #aa5745; background: repeating-linear-gradient(135deg,#f5dcd6 0 2mm,#dfa392 2mm 2.25mm); font-weight: 950; }
+      .print-task.category-break { border-color: #b97c1c; background-color: #fff0ca; background-image: radial-gradient(#daa346 .25mm,transparent .25mm); background-size: 2.3mm 2.3mm; }
+      .print-task.category-warning { border: .5mm dashed #ad691c; background: #fff0dc; }
+      .print-note { z-index: 2; display: grid; grid-template-columns: 6mm 1fr; gap: 1.5mm; align-items: start; margin: .4mm .6mm; padding: 1mm; overflow: hidden; border: .25mm solid #c8d4d6; border-radius: 1mm; background: #fff; font-size: 5.5pt; line-height: 1.3; }
+      .print-note-number { width: 6mm; height: 6mm; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #35515a; font-size: 5pt; font-weight: 900; }
+      .print-legend { display: flex; gap: 6mm; margin-top: 3mm; color: #50666c; font-size: 5.5pt; }
+      .print-legend .legend-swatch { width: 9mm; height: 3.5mm; }
+      .print-footer { display: flex; justify-content: space-between; margin-top: 2mm; color: #74858a; font-size: 5pt; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5.5h14v14H5zM5 10h14M9 3v5M15 3v5M9 10v9M15 10v9"/></svg></span>
+        <span class="brand-copy"><strong>段取り帖</strong><small>EVENT OPERATIONS / RUN OF SHOW</small></span>
+      </div>
+      <span id="saveState" class="save-state" aria-live="polite">保存済み</span>
+    </header>
+
+    <main class="workspace">
+      <section class="hero-row" aria-labelledby="pageTitle">
+        <div>
+          <p class="eyebrow">Offline schedule builder</p>
+          <h1 id="pageTitle">イベント・タイムスケジュール</h1>
+          <p class="lead">時間、人、作業を同じ軸で整理。データはこのブラウザ内だけに保存されます。</p>
+        </div>
+        <span class="local-chip"><svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z"/></svg>ローカル保存・外部送信なし</span>
+      </section>
+
+      <section class="control-panel" aria-labelledby="settingsTitle">
+        <div class="panel-heading">
+          <div><h2 id="settingsTitle">イベント基本設定</h2><p>変更内容は約0.7秒後に自動保存されます</p></div>
+        </div>
+        <div id="settingsGrid" class="settings-grid">
+          <label class="field event-title"><span>イベント名</span><input id="eventTitle" data-event-key="title" type="text" maxlength="80" placeholder="例：秋の舞台公演"></label>
+          <label class="field"><span>日付</span><input id="eventDate" data-event-key="date" type="date"></label>
+          <label class="field venue"><span>会場名</span><input id="eventVenue" data-event-key="venue" type="text" maxlength="80" placeholder="任意"></label>
+          <label class="field"><span>開始時刻</span><input id="eventStart" data-event-key="startTime" type="time" step="900"></label>
+          <label class="field"><span>終了時刻</span><input id="eventEnd" data-event-key="endTime" type="time" step="900"></label>
+          <label class="field"><span>時間粒度</span><select id="eventInterval" data-event-key="interval"><option value="15">15分</option><option value="30">30分</option><option value="60">60分</option></select></label>
+          <label class="field"><span>印刷時の部署数</span><select id="printColumns" data-event-key="printColumnsPerPage"><option value="3">3列</option><option value="4">4列</option><option value="5">5列</option><option value="6">6列</option></select></label>
+        </div>
+        <div id="settingsAlert" class="settings-alert" role="alert"></div>
+      </section>
+
+      <nav class="toolbar" aria-label="スケジュール操作">
+        <div class="toolbar-group">
+          <button id="addLaneBtn" class="button primary" type="button">＋ 部署／スタッフ</button>
+          <button id="addTaskBtn" class="button accent" type="button">＋ タスク</button>
+          <button id="addGlobalBtn" class="button" type="button">＋ 全体工程</button>
+          <button id="addNoteBtn" class="button" type="button">＋ 備考</button>
+        </div>
+        <span class="toolbar-sep" aria-hidden="true"></span>
+        <div class="toolbar-group">
+          <button id="saveBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M5 4h12l2 2v14H5zM8 4v6h8V4M8 20v-7h8v7"/></svg>保存</button>
+          <button id="exportBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>JSON書き出し</button>
+          <button id="importBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M12 16V5m0 0 4 4m-4-4L8 9M5 19h14"/></svg>JSON読み込み</button>
+          <input id="importInput" type="file" accept="application/json,.json" hidden>
+          <button id="printBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M7 8V4h10v4M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7z"/></svg>PDF出力</button>
+        </div>
+        <span class="toolbar-sep" aria-hidden="true"></span>
+        <button id="resetBtn" class="button danger" type="button">全削除</button>
+      </nav>
+
+      <section class="timeline-card" aria-labelledby="timelineHeading">
+        <div class="timeline-topline">
+          <div class="timeline-title"><strong id="timelineHeading">タイムライン</strong><span id="timelineMeta"></span></div>
+          <div id="legend" class="legend" aria-label="カテゴリ凡例"></div>
+        </div>
+        <div id="timelineScroller" class="timeline-scroller">
+          <div id="timelineGrid" class="timeline-grid" aria-label="イベントタイムライン"></div>
+        </div>
+        <div class="drag-hint">操作ヒント：空きセルをクリックして登録／工程帯をクリックして編集／工程帯を上下・左右へドラッグして時刻・担当を移動</div>
+      </section>
+    </main>
+  </div>
+
+  <div id="printRoot" class="print-root" aria-hidden="true"></div>
+  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog id="laneDialog">
+    <form id="laneForm" method="dialog">
+      <div class="dialog-head"><h2 id="laneDialogTitle">部署／スタッフを追加</h2><button class="dialog-close" data-close-dialog type="button" aria-label="閉じる">×</button></div>
+      <div class="dialog-body">
+        <input id="laneId" type="hidden">
+        <label class="field"><span>表示名</span><input id="laneName" type="text" maxlength="30" required placeholder="例：照明"></label>
+        <label class="field"><span>種別</span><select id="laneType"><option value="department">部署</option><option value="staff">スタッフ</option><option value="performer">出演者</option><option value="other">その他</option></select></label>
+        <p id="laneError" class="form-error" role="alert"></p>
+      </div>
+      <div class="dialog-actions"><button class="button" data-close-dialog type="button">キャンセル</button><button class="button primary" value="submit" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="taskDialog">
+    <form id="taskForm" method="dialog">
+      <div class="dialog-head"><h2 id="taskDialogTitle">タスクを追加</h2><button class="dialog-close" data-close-dialog type="button" aria-label="閉じる">×</button></div>
+      <div class="dialog-body">
+        <input id="taskId" type="hidden"><input id="taskMode" type="hidden">
+        <label id="taskLaneField" class="field"><span>対象列</span><select id="taskLane"></select></label>
+        <label class="field"><span>タイトル</span><input id="taskTitle" type="text" maxlength="60" required placeholder="例：照明仕込み"></label>
+        <div class="dialog-grid">
+          <label class="field"><span>開始時刻</span><select id="taskStart"></select></label>
+          <label class="field"><span>終了時刻</span><select id="taskEnd"></select></label>
+        </div>
+        <label class="field"><span>表示カテゴリ</span><select id="taskCategory"><option value="normal">通常作業</option><option value="important">重要工程</option><option value="break">休憩</option><option value="rehearsal">本番・リハ</option><option value="logistics">搬入搬出・設営</option><option value="warning">注意事項</option></select></label>
+        <label id="acrossField" class="check-field"><input id="taskAcross" type="checkbox"><span><strong>部署列をまたぐ横断帯として表示</strong><br>休憩・テクリハなど全部署に関係する工程向けです。</span></label>
+        <label id="taskMemoField" class="field"><span>メモ</span><textarea id="taskMemo" maxlength="300" placeholder="補足、必要人数、持ち物など"></textarea></label>
+        <p id="taskError" class="form-error" role="alert"></p>
+      </div>
+      <div class="dialog-actions"><button id="deleteTaskBtn" class="button danger" type="button">削除</button><button class="button" data-close-dialog type="button">キャンセル</button><button class="button primary" value="submit" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="noteDialog">
+    <form id="noteForm" method="dialog">
+      <div class="dialog-head"><h2 id="noteDialogTitle">備考を追加</h2><button class="dialog-close" data-close-dialog type="button" aria-label="閉じる">×</button></div>
+      <div class="dialog-body">
+        <input id="noteId" type="hidden">
+        <label class="field"><span>時刻</span><select id="noteTime"></select></label>
+        <label class="field"><span>備考・連絡</span><textarea id="noteText" maxlength="300" required placeholder="例：11:30 弁当受取、アレルギー表示を再確認"></textarea></label>
+        <p id="noteError" class="form-error" role="alert"></p>
+      </div>
+      <div class="dialog-actions"><button id="deleteNoteBtn" class="button danger" type="button">削除</button><button class="button" data-close-dialog type="button">キャンセル</button><button class="button primary" value="submit" type="submit">保存</button></div>
+    </form>
+  </dialog>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "dandoricho.eventTimetable.v1";
+      const VERSION = 1;
+      const CATEGORY_LABELS = {
+        normal: "通常作業",
+        important: "重要工程",
+        break: "休憩",
+        rehearsal: "本番・リハ",
+        logistics: "搬入搬出・設営",
+        warning: "注意事項"
+      };
+      const LANE_TYPE_LABELS = { department: "DEPARTMENT", staff: "STAFF", performer: "CAST", other: "OTHER" };
+      const ROW_HEIGHTS = { 15: 28, 30: 36, 60: 46 };
+      const HEADER_HEIGHT = 58;
+
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+      const h = (value) => String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[ch]));
+      const uid = (prefix) => `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      const toMinutes = (time) => { const [hh, mm] = String(time).split(":").map(Number); return hh * 60 + mm; };
+      const toTime = (minutes) => `${String(Math.floor(minutes / 60)).padStart(2,"0")}:${String(minutes % 60).padStart(2,"0")}`;
+      const overlaps = (aStart, aEnd, bStart, bEnd) => toMinutes(aStart) < toMinutes(bEnd) && toMinutes(bStart) < toMinutes(aEnd);
+      const formatDate = (value) => {
+        if (!value) return "日付未設定";
+        const d = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(d.getTime())) return value;
+        return new Intl.DateTimeFormat("ja-JP", { year:"numeric", month:"2-digit", day:"2-digit", weekday:"short" }).format(d);
+      };
+      const sampleState = () => ({
+        version: VERSION,
+        event: { title: "秋の舞台公演", date: "2026-10-17", venue: "市民文化ホール / MAIN HALL", startTime: "08:30", endTime: "22:00", interval: 30, printColumnsPerPage: 5 },
+        lanes: [
+          { id:"lane_stage", name:"舞台進行", type:"department", order:0 },
+          { id:"lane_cast", name:"出演者", type:"performer", order:1 },
+          { id:"lane_light", name:"照明", type:"department", order:2 },
+          { id:"lane_sound", name:"音響", type:"department", order:3 },
+          { id:"lane_video", name:"映像", type:"department", order:4 }
+        ],
+        tasks: [
+          { id:"t01", laneId:"lane_stage", title:"搬入・養生", start:"09:00", end:"10:00", category:"logistics", memo:"" },
+          { id:"t02", laneId:"lane_cast", title:"小屋入り・受付", start:"09:00", end:"10:00", category:"normal", memo:"" },
+          { id:"t03", laneId:"lane_light", title:"吊り込み・回路確認", start:"10:00", end:"12:30", category:"logistics", memo:"" },
+          { id:"t04", laneId:"lane_sound", title:"仕込み・配線", start:"10:00", end:"12:30", category:"logistics", memo:"" },
+          { id:"t05", laneId:"lane_video", title:"投影・信号確認", start:"10:00", end:"12:30", category:"logistics", memo:"" },
+          { id:"t06", laneId:"lane_stage", title:"場当たり", start:"15:30", end:"17:00", category:"rehearsal", memo:"" },
+          { id:"t07", laneId:"lane_cast", title:"場当たり", start:"15:30", end:"17:00", category:"rehearsal", memo:"" },
+          { id:"t08", laneId:"lane_light", title:"場当たり・修正", start:"15:30", end:"17:00", category:"rehearsal", memo:"" },
+          { id:"t09", laneId:"lane_sound", title:"プリセット", start:"17:30", end:"18:30", category:"normal", memo:"" },
+          { id:"t10", laneId:"lane_video", title:"待機画面セット", start:"17:30", end:"18:30", category:"normal", memo:"" },
+          { id:"t11", laneId:"lane_stage", title:"進行管理", start:"18:30", end:"21:30", category:"important", memo:"" },
+          { id:"t12", laneId:"lane_cast", title:"本番", start:"19:00", end:"21:00", category:"important", memo:"" },
+          { id:"t13", laneId:"lane_light", title:"本番オペ", start:"19:00", end:"21:00", category:"important", memo:"" },
+          { id:"t14", laneId:"lane_sound", title:"本番オペ", start:"19:00", end:"21:00", category:"important", memo:"" },
+          { id:"t15", laneId:"lane_video", title:"本番送出", start:"19:00", end:"21:00", category:"important", memo:"" }
+        ],
+        globalTasks: [
+          { id:"g01", title:"全体集合・朝礼", start:"08:30", end:"09:00", category:"important", across:false },
+          { id:"g02", title:"搬入・設営開始", start:"09:00", end:"10:00", category:"normal", across:false },
+          { id:"g03", title:"BREAK / 全体休憩", start:"12:30", end:"13:30", category:"break", across:true },
+          { id:"g04", title:"TECH REHEARSAL / テクリハ", start:"15:00", end:"15:30", category:"rehearsal", across:true },
+          { id:"g05", title:"客入れ", start:"18:30", end:"19:00", category:"important", across:false },
+          { id:"g06", title:"本番", start:"19:00", end:"21:00", category:"important", across:false },
+          { id:"g07", title:"終演・客出し", start:"21:00", end:"21:30", category:"normal", across:false }
+        ],
+        notes: [
+          { id:"n01", time:"09:00", text:"搬入口は8:45開錠\n台車は北口から入館" },
+          { id:"n02", time:"12:00", text:"弁当受取 12:00\nアレルギー表示を再確認" },
+          { id:"n03", time:"17:30", text:"開場判断 18:20\n無線CH 1＝進行 / CH 2＝受付" },
+          { id:"n04", time:"21:00", text:"完全退館 22:30\n撤収後に制作へ完了連絡" }
+        ],
+        meta: { updatedAt: new Date().toISOString() }
+      });
+      const blankState = () => ({ version: VERSION, event:{ title:"新しいイベント", date:"", venue:"", startTime:"09:00", endTime:"18:00", interval:30, printColumnsPerPage:5 }, lanes:[], tasks:[], globalTasks:[], notes:[], meta:{ updatedAt:new Date().toISOString() } });
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return sampleState();
+          const parsed = JSON.parse(raw);
+          validateData(parsed);
+          return normalizeState(parsed);
+        } catch (error) {
+          console.warn("保存データを読み込めませんでした", error);
+          return sampleState();
+        }
+      }
+      function normalizeState(data) {
+        return {
+          version: VERSION,
+          event: { ...blankState().event, ...data.event, interval:Number(data.event.interval), printColumnsPerPage:Number(data.event.printColumnsPerPage || 5) },
+          lanes: [...data.lanes].sort((a,b) => a.order - b.order).map((lane,index) => ({ ...lane, order:index })),
+          tasks: data.tasks.map(task => ({ category:"normal", memo:"", ...task })),
+          globalTasks: data.globalTasks.map(task => ({ category:"normal", across:false, ...task })),
+          notes: data.notes.map(note => ({ ...note })),
+          meta: data.meta || { updatedAt:new Date().toISOString() }
+        };
+      }
+      function validateData(data) {
+        if (!data || data.version !== VERSION) throw new Error(`対応していないデータ形式です（version ${data?.version ?? "不明"}）`);
+        if (!data.event || !Array.isArray(data.lanes) || !Array.isArray(data.tasks) || !Array.isArray(data.globalTasks) || !Array.isArray(data.notes)) throw new Error("必要なデータ項目がありません");
+        const start = toMinutes(data.event.startTime), end = toMinutes(data.event.endTime);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) throw new Error("イベントの開始・終了時刻が不正です");
+        if (![15,30,60].includes(Number(data.event.interval))) throw new Error("時間粒度が不正です");
+        const laneIds = new Set();
+        data.lanes.forEach(lane => { if (!lane.id || laneIds.has(lane.id)) throw new Error("部署IDが不正または重複しています"); laneIds.add(lane.id); });
+        [...data.tasks, ...data.globalTasks].forEach(task => {
+          const ts = toMinutes(task.start), te = toMinutes(task.end);
+          if (!task.id || !task.title || !Number.isFinite(ts) || !Number.isFinite(te) || ts >= te) throw new Error("不正なタスクがあります");
+          if (ts < start || te > end) throw new Error(`イベント時間外のタスクがあります：${task.title}`);
+        });
+        data.tasks.forEach(task => { if (!laneIds.has(task.laneId)) throw new Error(`存在しない対象列があります：${task.title}`); });
+      }
+
+      let state = loadState();
+      let saveTimer = null;
+      let suppressClickUntil = 0;
+      let drag = null;
+
+      const els = {
+        saveState: $("#saveState"), settingsGrid: $("#settingsGrid"), settingsAlert: $("#settingsAlert"),
+        timelineGrid: $("#timelineGrid"), timelineMeta: $("#timelineMeta"), legend: $("#legend"), printRoot: $("#printRoot"),
+        laneDialog: $("#laneDialog"), laneForm: $("#laneForm"), taskDialog: $("#taskDialog"), taskForm: $("#taskForm"), noteDialog: $("#noteDialog"), noteForm: $("#noteForm")
+      };
+
+      function syncSettings() {
+        $("#eventTitle").value = state.event.title;
+        $("#eventDate").value = state.event.date;
+        $("#eventVenue").value = state.event.venue;
+        $("#eventStart").value = state.event.startTime;
+        $("#eventEnd").value = state.event.endTime;
+        $("#eventInterval").value = String(state.event.interval);
+        $("#printColumns").value = String(state.event.printColumnsPerPage);
+      }
+      function getRange() {
+        const start = toMinutes(state.event.startTime), end = toMinutes(state.event.endTime), interval = Number(state.event.interval);
+        if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) return null;
+        const slots = [];
+        for (let m = start; m < end; m += interval) slots.push(m);
+        const quantum = 15;
+        return { start, end, interval, quantum, slots, displaySpan:interval / quantum, slotCount:(end - start) / quantum };
+      }
+      function scheduleSave() {
+        els.saveState.textContent = "保存中…";
+        els.saveState.className = "save-state is-saving";
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => saveNow(false), 700);
+      }
+      function saveNow(showToast = true) {
+        clearTimeout(saveTimer);
+        try {
+          state.meta.updatedAt = new Date().toISOString();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          els.saveState.textContent = `保存済み ${new Intl.DateTimeFormat("ja-JP", { hour:"2-digit", minute:"2-digit" }).format(new Date())}`;
+          els.saveState.className = "save-state";
+          if (showToast) toast("ブラウザに保存しました");
+        } catch (error) {
+          els.saveState.textContent = "保存できませんでした";
+          els.saveState.className = "save-state is-error";
+          toast("保存に失敗しました。ブラウザの保存領域をご確認ください。", "error");
+        }
+      }
+      function toast(message, type = "") {
+        const item = document.createElement("div");
+        item.className = `toast ${type}`;
+        item.textContent = message;
+        $("#toastRegion").append(item);
+        setTimeout(() => item.remove(), 3600);
+      }
+      function settingsValid(show = true) {
+        const range = getRange();
+        let message = "";
+        if (!range) message = "開始時刻は終了時刻より前に設定してください。";
+        if (show) {
+          els.settingsAlert.textContent = message;
+          els.settingsAlert.classList.toggle("show", Boolean(message));
+        }
+        return !message;
+      }
+      function renderLegend() {
+        els.legend.innerHTML = ["normal","logistics","rehearsal","important","break"].map(key => `<span class="legend-item"><span class="legend-swatch ${key}"></span>${h(CATEGORY_LABELS[key])}</span>`).join("");
+      }
+      function getOverlapIds() {
+        const ids = new Set();
+        state.tasks.forEach((task, i) => state.tasks.slice(i + 1).forEach(other => {
+          if (task.laneId === other.laneId && overlaps(task.start, task.end, other.start, other.end)) { ids.add(task.id); ids.add(other.id); }
+        }));
+        return ids;
+      }
+      function gridRow(time, range) { return 2 + Math.round((toMinutes(time) - range.start) / range.quantum); }
+      function renderTimeline() {
+        if (!settingsValid(true)) { els.timelineGrid.innerHTML = ""; els.timelineMeta.textContent = "設定を確認してください"; return; }
+        const range = getRange();
+        const lanes = [...state.lanes].sort((a,b) => a.order - b.order);
+        const noteCol = lanes.length + 3;
+        const minWidth = 72 + 170 + lanes.length * 150 + 230;
+        document.documentElement.style.setProperty("--row-h", `${ROW_HEIGHTS[range.interval] / range.displaySpan}px`);
+        els.timelineGrid.style.gridTemplateColumns = `72px 170px repeat(${lanes.length}, minmax(150px, 1fr)) 230px`;
+        els.timelineGrid.style.gridTemplateRows = `${HEADER_HEIGHT}px repeat(${range.slotCount}, var(--row-h))`;
+        els.timelineGrid.style.minWidth = `${minWidth}px`;
+
+        const headers = [
+          `<div class="grid-header time-header" style="grid-column:1;grid-row:1"><span class="header-copy"><strong>時間</strong><small>TIME</small></span></div>`,
+          `<div class="grid-header" style="grid-column:2;grid-row:1"><span class="header-copy"><strong>全体進行</strong><small>MASTER</small></span></div>`,
+          ...lanes.map((lane,index) => `<div class="grid-header lane-header" data-lane-id="${h(lane.id)}" style="grid-column:${index+3};grid-row:1"><span class="header-copy"><strong>${h(lane.name)}</strong><small>${h(LANE_TYPE_LABELS[lane.type] || "OTHER")}</small></span><span class="lane-actions"><button class="lane-action" data-lane-action="left" data-id="${h(lane.id)}" ${index===0?"disabled":""} title="左へ移動">←</button><button class="lane-action" data-lane-action="right" data-id="${h(lane.id)}" ${index===lanes.length-1?"disabled":""} title="右へ移動">→</button><button class="lane-action" data-lane-action="edit" data-id="${h(lane.id)}" title="編集">✎</button><button class="lane-action" data-lane-action="delete" data-id="${h(lane.id)}" title="削除">×</button></span></div>`),
+          `<div class="grid-header" style="grid-column:${noteCol};grid-row:1"><span class="header-copy"><strong>備考・連絡</strong><small>NOTES</small></span></div>`
+        ];
+        const cells = [];
+        range.slots.forEach((minute, index) => {
+          const row = 2 + Math.round((minute - range.start) / range.quantum), rowEnd = Math.min(row + range.displaySpan, range.slotCount + 2), time = toTime(minute), major = minute % 60 === 0;
+          cells.push(`<div class="grid-cell time-cell ${major?"major":""} ${index===range.slots.length-1?"last":""}" style="grid-column:1;grid-row:${row}/${rowEnd}">${time}</div>`);
+          cells.push(`<div class="grid-cell interactive" tabindex="0" role="button" aria-label="${time}に全体工程を追加" data-cell-kind="global" data-time="${time}" style="grid-column:2;grid-row:${row}/${rowEnd}"></div>`);
+          lanes.forEach((lane,laneIndex) => cells.push(`<div class="grid-cell interactive lane-track" tabindex="0" role="button" aria-label="${time} ${h(lane.name)}にタスクを追加" data-cell-kind="task" data-time="${time}" data-lane-id="${h(lane.id)}" style="grid-column:${laneIndex+3};grid-row:${row}/${rowEnd}"></div>`));
+          cells.push(`<div class="grid-cell interactive" tabindex="0" role="button" aria-label="${time}に備考を追加" data-cell-kind="note" data-time="${time}" style="grid-column:${noteCol};grid-row:${row}/${rowEnd}"></div>`);
+        });
+        if (!lanes.length) cells.push(`<div class="empty-message" style="grid-row:2 / ${range.slotCount+2}">「＋ 部署／スタッフ」から担当列を追加してください</div>`);
+
+        const overlapIds = getOverlapIds();
+        const taskBlocks = state.tasks.map(task => {
+          const laneIndex = lanes.findIndex(lane => lane.id === task.laneId);
+          if (laneIndex < 0 || toMinutes(task.end) <= range.start || toMinutes(task.start) >= range.end) return "";
+          const rowStart = gridRow(task.start, range), rowEnd = gridRow(task.end, range);
+          return `<div class="task-block category-${h(task.category)} ${overlapIds.has(task.id)?"overlap":""}" data-kind="task" data-id="${h(task.id)}" tabindex="0" role="button" aria-label="${h(task.title)} ${h(task.start)}から${h(task.end)}" style="grid-column:${laneIndex+3};grid-row:${rowStart}/${rowEnd}"><span class="task-copy">${h(task.title)}<small class="task-time">${h(task.start)}–${h(task.end)}</small></span></div>`;
+        });
+        const globalBlocks = [];
+        state.globalTasks.forEach(task => {
+          const rowStart = gridRow(task.start, range), rowEnd = gridRow(task.end, range);
+          globalBlocks.push(`<div class="task-block master-task category-${h(task.category)}" data-kind="global" data-id="${h(task.id)}" tabindex="0" role="button" aria-label="${h(task.title)} ${h(task.start)}から${h(task.end)}" style="grid-column:2;grid-row:${rowStart}/${rowEnd}"><span class="task-copy">${h(task.title)}<small class="task-time">${h(task.start)}–${h(task.end)}</small></span></div>`);
+          if (task.across && lanes.length) globalBlocks.push(`<div class="task-block cross-band category-${h(task.category)}" aria-hidden="true" style="grid-column:3/${noteCol};grid-row:${rowStart}/${rowEnd}"><span class="task-copy">${h(task.title)}</span></div>`);
+        });
+        const sortedNotes = [...state.notes].sort((a,b) => toMinutes(a.time)-toMinutes(b.time));
+        const notes = sortedNotes.map((note,index) => {
+          const rowStart = gridRow(note.time, range), rowEnd = Math.min(rowStart + 4, range.slotCount + 2);
+          return `<div class="note-card" data-note-id="${h(note.id)}" tabindex="0" role="button" aria-label="備考 ${String(index+1).padStart(2,"0")}" style="grid-column:${noteCol};grid-row:${rowStart}/${rowEnd}"><span class="note-number">${String(index+1).padStart(2,"0")}</span><span class="note-text">${h(note.text)}</span></div>`;
+        });
+        els.timelineGrid.innerHTML = [...headers, ...cells, ...taskBlocks, ...globalBlocks, ...notes].join("");
+        els.timelineMeta.textContent = `${formatDate(state.event.date)} ・ ${state.event.venue || "会場未設定"} ・ ${state.event.startTime}–${state.event.endTime} ・ ${state.event.interval}分刻み ・ ${lanes.length}列`;
+        $("#timelineHeading").textContent = state.event.title || "タイムライン";
+      }
+
+      function renderAll() { syncSettings(); renderLegend(); renderTimeline(); }
+      function timeOptions(includeEnd = true) {
+        const range = getRange();
+        if (!range) return "";
+        const list = [...range.slots];
+        if (includeEnd) list.push(range.end);
+        return list.map(minute => `<option value="${toTime(minute)}">${toTime(minute)}</option>`).join("");
+      }
+      function nextTime(time) {
+        const range = getRange();
+        return toTime(Math.min(toMinutes(time) + range.interval, range.end));
+      }
+
+      function openLaneDialog(id = "") {
+        const lane = state.lanes.find(item => item.id === id);
+        $("#laneDialogTitle").textContent = lane ? "部署／スタッフを編集" : "部署／スタッフを追加";
+        $("#laneId").value = lane?.id || "";
+        $("#laneName").value = lane?.name || "";
+        $("#laneType").value = lane?.type || "department";
+        $("#laneError").textContent = "";
+        els.laneDialog.showModal();
+        $("#laneName").focus();
+      }
+      function openTaskDialog(mode = "task", id = "", defaults = {}) {
+        const collection = mode === "global" ? state.globalTasks : state.tasks;
+        const task = collection.find(item => item.id === id);
+        const range = getRange();
+        if (!range) { toast("先にイベント時刻を正しく設定してください", "error"); return; }
+        if (mode === "task" && !state.lanes.length) { toast("先に部署／スタッフ列を追加してください", "warn"); openLaneDialog(); return; }
+        $("#taskDialogTitle").textContent = `${mode === "global" ? "全体工程" : "タスク"}を${task ? "編集" : "追加"}`;
+        $("#taskId").value = task?.id || "";
+        $("#taskMode").value = mode;
+        $("#taskLaneField").hidden = mode === "global";
+        $("#acrossField").hidden = mode !== "global";
+        $("#taskLane").innerHTML = state.lanes.map(lane => `<option value="${h(lane.id)}">${h(lane.name)}</option>`).join("");
+        $("#taskStart").innerHTML = timeOptions(false);
+        $("#taskEnd").innerHTML = timeOptions(true);
+        const start = task?.start || defaults.start || toTime(range.start);
+        $("#taskLane").value = task?.laneId || defaults.laneId || state.lanes[0]?.id || "";
+        $("#taskTitle").value = task?.title || "";
+        $("#taskStart").value = start;
+        $("#taskEnd").value = task?.end || nextTime(start);
+        $("#taskCategory").value = task?.category || (mode === "global" ? "important" : "normal");
+        $("#taskAcross").checked = Boolean(task?.across);
+        $("#taskMemo").value = task?.memo || "";
+        $("#taskMemoField").hidden = mode === "global";
+        $("#deleteTaskBtn").hidden = !task;
+        $("#taskError").textContent = "";
+        els.taskDialog.showModal();
+        $("#taskTitle").focus();
+      }
+      function openNoteDialog(id = "", defaults = {}) {
+        const note = state.notes.find(item => item.id === id);
+        if (!getRange()) { toast("先にイベント時刻を正しく設定してください", "error"); return; }
+        $("#noteDialogTitle").textContent = `備考を${note ? "編集" : "追加"}`;
+        $("#noteId").value = note?.id || "";
+        $("#noteTime").innerHTML = timeOptions(false);
+        $("#noteTime").value = note?.time || defaults.time || state.event.startTime;
+        $("#noteText").value = note?.text || "";
+        $("#deleteNoteBtn").hidden = !note;
+        $("#noteError").textContent = "";
+        els.noteDialog.showModal();
+        $("#noteText").focus();
+      }
+      function closeDialogs() { $$('dialog[open]').forEach(dialog => dialog.close()); }
+
+      els.settingsGrid.addEventListener("input", event => {
+        const input = event.target.closest("[data-event-key]");
+        if (!input) return;
+        const key = input.dataset.eventKey;
+        const previous = state.event[key];
+        state.event[key] = ["interval","printColumnsPerPage"].includes(key) ? Number(input.value) : input.value;
+        if (["startTime","endTime","interval"].includes(key)) {
+          const range = getRange();
+          const invalidRange = !range;
+          const outside = range && [...state.tasks, ...state.globalTasks].some(task => toMinutes(task.start) < range.start || toMinutes(task.end) > range.end);
+          const outsideNote = range && state.notes.some(note => toMinutes(note.time) < range.start || toMinutes(note.time) >= range.end);
+          if (invalidRange || ((key === "startTime" || key === "endTime") && (outside || outsideNote))) {
+            state.event[key] = previous;
+            input.value = String(previous);
+            const message = invalidRange ? "開始時刻は終了時刻より前にしてください。" : "既存の工程または備考が時間外になるため変更できません。先に対象データを移動・削除してください。";
+            els.settingsAlert.textContent = message;
+            els.settingsAlert.classList.add("show");
+            toast(message, "warn");
+            return;
+          }
+          renderTimeline();
+        } else {
+          renderTimeline();
+        }
+        scheduleSave();
+      });
+      $("#addLaneBtn").addEventListener("click", () => openLaneDialog());
+      $("#addTaskBtn").addEventListener("click", () => openTaskDialog("task"));
+      $("#addGlobalBtn").addEventListener("click", () => openTaskDialog("global"));
+      $("#addNoteBtn").addEventListener("click", () => openNoteDialog());
+      $("#saveBtn").addEventListener("click", () => saveNow(true));
+      $("#printBtn").addEventListener("click", () => { if (!settingsValid(true)) return; buildPrint(); window.print(); });
+      $("#resetBtn").addEventListener("click", () => {
+        if (!confirm("イベント情報・部署・タスク・備考をすべて削除します。JSONを書き出していない内容は元に戻せません。続けますか？")) return;
+        state = blankState();
+        renderAll();
+        saveNow(false);
+        toast("すべての内容を削除しました");
+      });
+      $("#exportBtn").addEventListener("click", exportJson);
+      $("#importBtn").addEventListener("click", () => $("#importInput").click());
+      $("#importInput").addEventListener("change", importJson);
+      $$('[data-close-dialog]').forEach(button => button.addEventListener("click", () => button.closest("dialog").close()));
+      $$('dialog').forEach(dialog => dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); }));
+
+      els.laneForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const id = $("#laneId").value, name = $("#laneName").value.trim(), type = $("#laneType").value;
+        if (!name) { $("#laneError").textContent = "表示名を入力してください。"; return; }
+        if (id) Object.assign(state.lanes.find(lane => lane.id === id), { name, type });
+        else state.lanes.push({ id:uid("lane"), name, type, order:state.lanes.length });
+        els.laneDialog.close(); renderTimeline(); scheduleSave();
+      });
+      els.taskForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const mode = $("#taskMode").value, id = $("#taskId").value, title = $("#taskTitle").value.trim();
+        const start = $("#taskStart").value, end = $("#taskEnd").value, category = $("#taskCategory").value;
+        if (!title) { $("#taskError").textContent = "タイトルを入力してください。"; return; }
+        if (toMinutes(start) >= toMinutes(end)) { $("#taskError").textContent = "終了時刻は開始時刻より後にしてください。"; return; }
+        if (mode === "task") {
+          const laneId = $("#taskLane").value;
+          if (!state.lanes.some(lane => lane.id === laneId)) { $("#taskError").textContent = "対象列を選択してください。"; return; }
+          const value = { id:id || uid("task"), laneId, title, start, end, category, memo:$("#taskMemo").value.trim() };
+          const index = state.tasks.findIndex(task => task.id === id);
+          if (index >= 0) state.tasks[index] = value; else state.tasks.push(value);
+          if (state.tasks.some(task => task.id !== value.id && task.laneId === laneId && overlaps(start,end,task.start,task.end))) toast("同じ部署・時間帯に重複があります", "warn");
+        } else {
+          const value = { id:id || uid("global"), title, start, end, category, across:$("#taskAcross").checked };
+          const index = state.globalTasks.findIndex(task => task.id === id);
+          if (index >= 0) state.globalTasks[index] = value; else state.globalTasks.push(value);
+        }
+        els.taskDialog.close(); renderTimeline(); scheduleSave();
+      });
+      $("#deleteTaskBtn").addEventListener("click", () => {
+        const mode = $("#taskMode").value, id = $("#taskId").value;
+        if (!id || !confirm("この工程を削除しますか？")) return;
+        if (mode === "global") state.globalTasks = state.globalTasks.filter(task => task.id !== id);
+        else state.tasks = state.tasks.filter(task => task.id !== id);
+        els.taskDialog.close(); renderTimeline(); scheduleSave();
+      });
+      els.noteForm.addEventListener("submit", event => {
+        event.preventDefault();
+        const id = $("#noteId").value, time = $("#noteTime").value, text = $("#noteText").value.trim();
+        if (!text) { $("#noteError").textContent = "備考を入力してください。"; return; }
+        const value = { id:id || uid("note"), time, text };
+        const index = state.notes.findIndex(note => note.id === id);
+        if (index >= 0) state.notes[index] = value; else state.notes.push(value);
+        els.noteDialog.close(); renderTimeline(); scheduleSave();
+      });
+      $("#deleteNoteBtn").addEventListener("click", () => {
+        const id = $("#noteId").value;
+        if (!id || !confirm("この備考を削除しますか？")) return;
+        state.notes = state.notes.filter(note => note.id !== id);
+        els.noteDialog.close(); renderTimeline(); scheduleSave();
+      });
+
+      els.timelineGrid.addEventListener("click", event => {
+        if (Date.now() < suppressClickUntil) return;
+        const laneAction = event.target.closest("[data-lane-action]");
+        if (laneAction) { handleLaneAction(laneAction.dataset.laneAction, laneAction.dataset.id); return; }
+        const task = event.target.closest(".task-block[data-kind]");
+        if (task) { openTaskDialog(task.dataset.kind, task.dataset.id); return; }
+        const note = event.target.closest("[data-note-id]");
+        if (note) { openNoteDialog(note.dataset.noteId); return; }
+        const cell = event.target.closest("[data-cell-kind]");
+        if (!cell) return;
+        if (cell.dataset.cellKind === "task") openTaskDialog("task", "", { start:cell.dataset.time, laneId:cell.dataset.laneId });
+        if (cell.dataset.cellKind === "global") openTaskDialog("global", "", { start:cell.dataset.time });
+        if (cell.dataset.cellKind === "note") openNoteDialog("", { time:cell.dataset.time });
+      });
+      els.timelineGrid.addEventListener("keydown", event => {
+        if (!["Enter"," "].includes(event.key)) return;
+        const target = event.target.closest("[role='button']");
+        if (target) { event.preventDefault(); target.click(); }
+      });
+
+      function handleLaneAction(action, id) {
+        const index = state.lanes.findIndex(lane => lane.id === id);
+        if (index < 0) return;
+        if (action === "edit") return openLaneDialog(id);
+        if (action === "delete") {
+          const count = state.tasks.filter(task => task.laneId === id).length;
+          const message = count ? `「${state.lanes[index].name}」には${count}件のタスクがあります。列とタスクを削除しますか？` : `「${state.lanes[index].name}」を削除しますか？`;
+          if (!confirm(message)) return;
+          state.tasks = state.tasks.filter(task => task.laneId !== id);
+          state.lanes.splice(index, 1);
+        }
+        if (action === "left" && index > 0) [state.lanes[index-1], state.lanes[index]] = [state.lanes[index], state.lanes[index-1]];
+        if (action === "right" && index < state.lanes.length - 1) [state.lanes[index+1], state.lanes[index]] = [state.lanes[index], state.lanes[index+1]];
+        state.lanes.forEach((lane,i) => lane.order = i);
+        renderTimeline(); scheduleSave();
+      }
+
+      function exportJson() {
+        saveNow(false);
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+        const url = URL.createObjectURL(blob), link = document.createElement("a");
+        const safeName = (state.event.title || "event-timetable").replace(/[\\/:*?"<>|]/g,"_").slice(0,50);
+        link.href = url; link.download = `${safeName}_${state.event.date || "undated"}.json`; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast("JSONを書き出しました");
+      }
+      async function importJson(event) {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+        if (!file) return;
+        try {
+          const data = JSON.parse(await file.text());
+          validateData(data);
+          state = normalizeState(data);
+          renderAll(); saveNow(false); toast("JSONを読み込みました");
+        } catch (error) { toast(`読み込みに失敗しました：${error.message}`, "error"); }
+      }
+
+      function startDrag(event) {
+        if (event.button !== 0) return;
+        const block = event.target.closest(".task-block[data-kind]");
+        if (!block) return;
+        const kind = block.dataset.kind, collection = kind === "global" ? state.globalTasks : state.tasks;
+        const task = collection.find(item => item.id === block.dataset.id), range = getRange();
+        if (!task || !range) return;
+        const blockRect = block.getBoundingClientRect();
+        const durationSlots = Math.round((toMinutes(task.end) - toMinutes(task.start)) / range.quantum);
+        drag = {
+          pointerId:event.pointerId, block, task, kind, range, durationSlots,
+          grabSlot:Math.max(0, Math.min(durationSlots - 1, Math.floor((event.clientY - blockRect.top) / (ROW_HEIGHTS[range.interval] / range.displaySpan)))),
+          downX:event.clientX, downY:event.clientY, active:false, valid:true,
+          candidateStart:toMinutes(task.start), candidateLane:task.laneId || null, ghost:null
+        };
+        block.setPointerCapture?.(event.pointerId);
+      }
+      function moveDrag(event) {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        if (!drag.active && Math.hypot(event.clientX - drag.downX, event.clientY - drag.downY) < 6) return;
+        if (!drag.active) {
+          drag.active = true;
+          drag.block.classList.add("dragging-source");
+          document.body.classList.add("is-dragging");
+          drag.ghost = drag.block.cloneNode(true);
+          drag.ghost.removeAttribute("data-id");
+          drag.ghost.classList.add("drag-ghost");
+          drag.ghost.style.gridColumn = ""; drag.ghost.style.gridRow = "";
+          document.body.append(drag.ghost);
+        }
+        event.preventDefault();
+        const gridRect = els.timelineGrid.getBoundingClientRect(), rowH = ROW_HEIGHTS[drag.range.interval] / drag.range.displaySpan;
+        const rawSlot = Math.round((event.clientY - gridRect.top - HEADER_HEIGHT) / rowH - drag.grabSlot);
+        const maxSlot = drag.range.slotCount - drag.durationSlots;
+        const snappedSlot = Math.round(rawSlot / drag.range.displaySpan) * drag.range.displaySpan;
+        const snappedMax = Math.floor(maxSlot / drag.range.displaySpan) * drag.range.displaySpan;
+        const slot = Math.max(0, Math.min(snappedMax, snappedSlot));
+        drag.valid = snappedSlot >= 0 && snappedSlot <= maxSlot;
+        drag.candidateStart = drag.range.start + slot * drag.range.quantum;
+        let targetRect;
+        if (drag.kind === "task") {
+          const headers = $$(".lane-header", els.timelineGrid);
+          const target = headers.find(header => { const r = header.getBoundingClientRect(); return event.clientX >= r.left && event.clientX <= r.right; });
+          if (!target) drag.valid = false;
+          else { drag.candidateLane = target.dataset.laneId; targetRect = target.getBoundingClientRect(); }
+        } else targetRect = $(".grid-header[style*='grid-column:2']", els.timelineGrid)?.getBoundingClientRect();
+        if (!targetRect) drag.valid = false;
+        const top = gridRect.top + HEADER_HEIGHT + slot * rowH;
+        Object.assign(drag.ghost.style, { left:`${targetRect?.left ?? drag.block.getBoundingClientRect().left}px`, top:`${top}px`, width:`${targetRect?.width ?? drag.block.getBoundingClientRect().width}px`, height:`${drag.durationSlots * rowH}px` });
+        drag.ghost.classList.toggle("invalid", !drag.valid);
+        const end = drag.candidateStart + drag.durationSlots * drag.range.quantum;
+        const laneName = state.lanes.find(lane => lane.id === drag.candidateLane)?.name;
+        $(".task-copy", drag.ghost).innerHTML = `${h(drag.task.title)}<small class="task-time" style="opacity:.8">${toTime(drag.candidateStart)}–${toTime(end)}${laneName ? ` / ${h(laneName)}` : ""}</small>`;
+      }
+      function endDrag(event) {
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        drag.block.releasePointerCapture?.(event.pointerId);
+        if (drag.active) {
+          suppressClickUntil = Date.now() + 350;
+          if (drag.valid) {
+            const newStart = toTime(drag.candidateStart), newEnd = toTime(drag.candidateStart + drag.durationSlots * drag.range.quantum);
+            drag.task.start = newStart; drag.task.end = newEnd;
+            if (drag.kind === "task") {
+              drag.task.laneId = drag.candidateLane;
+              if (state.tasks.some(task => task.id !== drag.task.id && task.laneId === drag.task.laneId && overlaps(newStart,newEnd,task.start,task.end))) toast("同じ部署・時間帯に重複があります", "warn");
+            }
+            renderTimeline(); scheduleSave();
+          } else toast("イベント時間外、または担当列以外には移動できません", "warn");
+          drag.ghost?.remove();
+          drag.block.classList.remove("dragging-source");
+          document.body.classList.remove("is-dragging");
+        }
+        drag = null;
+      }
+      els.timelineGrid.addEventListener("pointerdown", startDrag);
+      window.addEventListener("pointermove", moveDrag, { passive:false });
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+
+      function buildPrint() {
+        const range = getRange();
+        if (!range) return;
+        const lanes = [...state.lanes].sort((a,b) => a.order - b.order), size = Number(state.event.printColumnsPerPage) || 5;
+        const groups = lanes.length ? Array.from({ length:Math.ceil(lanes.length / size) }, (_,i) => lanes.slice(i*size, (i+1)*size)) : [[]];
+        els.printRoot.innerHTML = groups.map((group,index) => printPage(group,index,groups.length,range,lanes.length)).join("");
+      }
+      function printPage(lanes, pageIndex, totalPages, range, totalLanes) {
+        const noteCol = lanes.length + 3;
+        const cols = `14mm 31mm repeat(${lanes.length}, minmax(24mm, 1fr)) 39mm`;
+        const rows = `8mm repeat(${range.slotCount}, var(--print-row-h))`;
+        const laneFrom = totalLanes ? pageIndex * state.event.printColumnsPerPage + 1 : 0;
+        const laneTo = laneFrom ? laneFrom + lanes.length - 1 : 0;
+        const headers = [
+          `<div class="print-grid-header" style="grid-column:1;grid-row:1">時間<small>TIME</small></div>`,
+          `<div class="print-grid-header" style="grid-column:2;grid-row:1">全体進行<small>MASTER</small></div>`,
+          ...lanes.map((lane,i) => `<div class="print-grid-header" style="grid-column:${i+3};grid-row:1">${h(lane.name)}<small>${h(LANE_TYPE_LABELS[lane.type] || "OTHER")}</small></div>`),
+          `<div class="print-grid-header" style="grid-column:${noteCol};grid-row:1">備考・連絡<small>NOTES</small></div>`
+        ];
+        const cells = [];
+        range.slots.forEach((minute,index) => {
+          const row = 2 + Math.round((minute - range.start) / range.quantum), rowEnd = Math.min(row + range.displaySpan, range.slotCount + 2), time = toTime(minute), major = minute % 60 === 0;
+          cells.push(`<div class="print-cell print-time ${major?"major":""}" style="grid-column:1;grid-row:${row}/${rowEnd}">${time}</div>`);
+          for (let col=2; col<=noteCol; col++) cells.push(`<div class="print-cell" style="grid-column:${col};grid-row:${row}/${rowEnd}"></div>`);
+        });
+        const items = [];
+        state.globalTasks.forEach(task => {
+          const rs = gridRow(task.start,range), re = gridRow(task.end,range);
+          items.push(`<div class="print-task category-${h(task.category)}" style="grid-column:2;grid-row:${rs}/${re}">${h(task.title)}</div>`);
+          if (task.across && lanes.length) items.push(`<div class="print-task category-${h(task.category)}" style="grid-column:3/${noteCol};grid-row:${rs}/${re}">${h(task.title)}</div>`);
+        });
+        state.tasks.forEach(task => {
+          const laneIndex = lanes.findIndex(lane => lane.id === task.laneId);
+          if (laneIndex < 0) return;
+          items.push(`<div class="print-task category-${h(task.category)}" style="grid-column:${laneIndex+3};grid-row:${gridRow(task.start,range)}/${gridRow(task.end,range)}">${h(task.title)}</div>`);
+        });
+        [...state.notes].sort((a,b)=>toMinutes(a.time)-toMinutes(b.time)).forEach((note,index) => {
+          const rs = gridRow(note.time,range), re = Math.min(rs+4,range.slotCount+2);
+          const globalIndex = [...state.notes].sort((a,b)=>toMinutes(a.time)-toMinutes(b.time)).findIndex(item => item.id === note.id) + 1;
+          items.push(`<div class="print-note" style="grid-column:${noteCol};grid-row:${rs}/${re}"><span class="print-note-number">${String(globalIndex).padStart(2,"0")}</span><span>${h(note.text).replace(/\n/g,"<br>")}</span></div>`);
+        });
+        const updated = new Date(state.meta.updatedAt || Date.now());
+        return `<section class="print-page">
+          <div class="print-header">
+            <div class="print-title"><div class="print-accent"></div><h1>${h(state.event.title || "イベント・タイムスケジュール")}</h1><p>EVENT OPERATIONS / RUN OF SHOW</p></div>
+            <div class="print-page-no">PAGE&nbsp; ${String(pageIndex+1).padStart(2,"0")} / ${String(totalPages).padStart(2,"0")}</div>
+            <div class="print-meta"><strong>${h(formatDate(state.event.date))}</strong><span>会場&nbsp; ${h(state.event.venue || "未設定")}</span><span>部門&nbsp; ${laneFrom ? `${laneFrom}-${laneTo} / ${totalLanes}` : "なし"}</span><span>更新&nbsp; ${h(new Intl.DateTimeFormat("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(updated))}</span><div class="print-pills"><span class="print-pill"><span>開始</span><b>${h(state.event.startTime)}</b></span><span class="print-pill"><span>終了</span><b>${h(state.event.endTime)}</b></span><span class="print-pill"><span>時間粒度</span><b>${state.event.interval}分</b></span></div></div>
+          </div>
+          <div class="print-grid" style="--print-row-h:${4.55 / range.displaySpan}mm;grid-template-columns:${cols};grid-template-rows:${rows}">${[...headers,...cells,...items].join("")}</div>
+          <div class="print-legend">${["normal","logistics","rehearsal","important","break"].map(key=>`<span class="legend-item"><span class="legend-swatch ${key}"></span>${h(CATEGORY_LABELS[key])}</span>`).join("")}</div>
+          <div class="print-footer"><span>段取り帖 / EVENT TIMETABLE</span><span>時刻・担当・工程を現場で相互確認してください</span></div>
+        </section>`;
+      }
+      window.addEventListener("beforeprint", buildPrint);
+
+      document.addEventListener("keydown", event => { if (event.key === "Escape") closeDialogs(); });
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
