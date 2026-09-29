@@ -123,6 +123,10 @@
     .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 18px 13px; border-bottom: 1px solid #e2e9e9; }
     .panel-heading h2 { margin: 0; font-size: 1rem; }
     .panel-heading p { margin: 3px 0 0; color: var(--muted); font-size: .76rem; }
+    .control-panel.is-collapsed .panel-heading { border-bottom-color: transparent; }
+    .collapse-button { flex: 0 0 auto; }
+    .collapse-button svg { transition: transform .18s ease; }
+    .control-panel.is-collapsed .collapse-button svg { transform: rotate(-90deg); }
     .settings-grid { display: grid; grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(180px, 1.3fr) repeat(2, minmax(120px, .7fr)) minmax(110px, .6fr) minmax(120px, .7fr); gap: 12px; padding: 15px 18px 18px; }
     .field { display: grid; gap: 6px; min-width: 0; }
     .field > span, .field-label { color: #52676d; font-size: .72rem; font-weight: 900; letter-spacing: .04em; }
@@ -155,6 +159,19 @@
     }
     .toolbar-group { display: flex; align-items: center; gap: 7px; flex: 0 0 auto; }
     .toolbar-sep { width: 1px; height: 30px; flex: 0 0 auto; background: #d9e2e3; margin: 0 2px; }
+    .toolbar.is-docked {
+      position: fixed;
+      left: 50%;
+      bottom: 12px;
+      z-index: 900;
+      width: min(1760px, calc(100% - 32px));
+      margin-bottom: 0;
+      transform: translateX(-50%);
+      box-shadow: 0 16px 44px rgba(13, 41, 49, .24);
+    }
+    body.toolbar-docked .workspace { padding-bottom: 112px; }
+    body.toolbar-docked .timeline-scroller { padding-bottom: 78px; }
+    body.toolbar-docked .toast-region { bottom: 84px; }
     .button {
       display: inline-flex;
       align-items: center;
@@ -370,6 +387,8 @@
       .legend { justify-content: flex-start; }
       .dialog-grid { grid-template-columns: 1fr; }
       .button .optional-label { display: none; }
+      .toolbar.is-docked { bottom: 10px; width: calc(100% - 20px); }
+      body.toolbar-docked .workspace { padding-bottom: 108px; }
     }
 
     @media print {
@@ -416,7 +435,7 @@
     <header class="app-header">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5.5h14v14H5zM5 10h14M9 3v5M15 3v5M9 10v9M15 10v9"/></svg></span>
-        <span class="brand-copy"><strong>段取り帖</strong><small>EVENT OPERATIONS / RUN OF SHOW</small></span>
+        <span class="brand-copy"><strong>段取り帖</strong><small>イベント進行表</small></span>
       </div>
       <span id="saveState" class="save-state" aria-live="polite">保存済み</span>
     </header>
@@ -424,16 +443,17 @@
     <main class="workspace">
       <section class="hero-row" aria-labelledby="pageTitle">
         <div>
-          <p class="eyebrow">Offline schedule builder</p>
+          <p class="eyebrow">イベント進行表作成</p>
           <h1 id="pageTitle">イベント・タイムスケジュール</h1>
           <p class="lead">時間、人、作業を同じ軸で整理。データはこのブラウザ内だけに保存されます。</p>
         </div>
         <span class="local-chip"><svg viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z"/></svg>ローカル保存・外部送信なし</span>
       </section>
 
-      <section class="control-panel" aria-labelledby="settingsTitle">
+      <section id="settingsPanel" class="control-panel" aria-labelledby="settingsTitle">
         <div class="panel-heading">
           <div><h2 id="settingsTitle">イベント基本設定</h2><p>変更内容は約0.7秒後に自動保存されます</p></div>
+          <button id="settingsToggleBtn" class="button small collapse-button" type="button" aria-expanded="true" aria-controls="settingsGrid settingsAlert"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><span id="settingsToggleLabel">折り畳む</span></button>
         </div>
         <div id="settingsGrid" class="settings-grid">
           <label class="field event-title"><span>イベント名</span><input id="eventTitle" data-event-key="title" type="text" maxlength="80" placeholder="例：秋の舞台公演"></label>
@@ -460,10 +480,13 @@
           <button id="exportBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>JSON書き出し</button>
           <button id="importBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M12 16V5m0 0 4 4m-4-4L8 9M5 19h14"/></svg>JSON読み込み</button>
           <input id="importInput" type="file" accept="application/json,.json" hidden>
+          <button id="csvExportBtn" class="button" type="button" title="Excel・Googleスプレッドシートで開けるCSV形式"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM5 9h14M10 4v16"/></svg>表計算CSV</button>
           <button id="printBtn" class="button" type="button"><svg viewBox="0 0 24 24"><path d="M7 8V4h10v4M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v6H7z"/></svg>PDF出力</button>
         </div>
         <span class="toolbar-sep" aria-hidden="true"></span>
         <button id="resetBtn" class="button danger" type="button">全削除</button>
+        <span class="toolbar-sep" aria-hidden="true"></span>
+        <button id="toolbarDockBtn" class="button" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17V4M7 9l5-5 5 5M5 20h14"/></svg><span id="toolbarDockLabel">下部固定</span></button>
       </nav>
 
       <section class="timeline-card" aria-labelledby="timelineHeading">
@@ -533,6 +556,7 @@
       "use strict";
 
       const STORAGE_KEY = "dandoricho.eventTimetable.v1";
+      const UI_STORAGE_KEY = "dandoricho.eventTimetable.ui.v1";
       const VERSION = 1;
       const CATEGORY_LABELS = {
         normal: "通常作業",
@@ -542,7 +566,6 @@
         logistics: "搬入搬出・設営",
         warning: "注意事項"
       };
-      const LANE_TYPE_LABELS = { department: "DEPARTMENT", staff: "STAFF", performer: "CAST", other: "OTHER" };
       const ROW_HEIGHTS = { 15: 28, 30: 36, 60: 46 };
       const HEADER_HEIGHT = 58;
 
@@ -561,7 +584,7 @@
       };
       const sampleState = () => ({
         version: VERSION,
-        event: { title: "秋の舞台公演", date: "2026-10-17", venue: "市民文化ホール / MAIN HALL", startTime: "08:30", endTime: "22:00", interval: 30, printColumnsPerPage: 5 },
+        event: { title: "秋の舞台公演", date: "2026-10-17", venue: "市民文化ホール", startTime: "08:30", endTime: "22:00", interval: 30, printColumnsPerPage: 5 },
         lanes: [
           { id:"lane_stage", name:"舞台進行", type:"department", order:0 },
           { id:"lane_cast", name:"出演者", type:"performer", order:1 },
@@ -589,8 +612,8 @@
         globalTasks: [
           { id:"g01", title:"全体集合・朝礼", start:"08:30", end:"09:00", category:"important", across:false },
           { id:"g02", title:"搬入・設営開始", start:"09:00", end:"10:00", category:"normal", across:false },
-          { id:"g03", title:"BREAK / 全体休憩", start:"12:30", end:"13:30", category:"break", across:true },
-          { id:"g04", title:"TECH REHEARSAL / テクリハ", start:"15:00", end:"15:30", category:"rehearsal", across:true },
+          { id:"g03", title:"全体休憩", start:"12:30", end:"13:30", category:"break", across:true },
+          { id:"g04", title:"テクニカルリハーサル", start:"15:00", end:"15:30", category:"rehearsal", across:true },
           { id:"g05", title:"客入れ", start:"18:30", end:"19:00", category:"important", across:false },
           { id:"g06", title:"本番", start:"19:00", end:"21:00", category:"important", across:false },
           { id:"g07", title:"終演・客出し", start:"21:00", end:"21:30", category:"normal", across:false }
@@ -645,15 +668,40 @@
       }
 
       let state = loadState();
+      let uiState = loadUiState();
       let saveTimer = null;
       let suppressClickUntil = 0;
       let drag = null;
 
       const els = {
         saveState: $("#saveState"), settingsGrid: $("#settingsGrid"), settingsAlert: $("#settingsAlert"),
+        settingsPanel: $("#settingsPanel"), settingsToggleBtn: $("#settingsToggleBtn"), toolbar: $(".toolbar"), toolbarDockBtn: $("#toolbarDockBtn"),
         timelineGrid: $("#timelineGrid"), timelineMeta: $("#timelineMeta"), legend: $("#legend"), printRoot: $("#printRoot"),
         laneDialog: $("#laneDialog"), laneForm: $("#laneForm"), taskDialog: $("#taskDialog"), taskForm: $("#taskForm"), noteDialog: $("#noteDialog"), noteForm: $("#noteForm")
       };
+
+      function loadUiState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(UI_STORAGE_KEY) || "{}");
+          return { settingsCollapsed:Boolean(saved.settingsCollapsed), toolbarDocked:Boolean(saved.toolbarDocked) };
+        } catch (_) {
+          return { settingsCollapsed:false, toolbarDocked:false };
+        }
+      }
+      function saveUiState() {
+        try { localStorage.setItem(UI_STORAGE_KEY, JSON.stringify(uiState)); } catch (_) {}
+      }
+      function applyUiState() {
+        els.settingsPanel.classList.toggle("is-collapsed", uiState.settingsCollapsed);
+        els.settingsGrid.hidden = uiState.settingsCollapsed;
+        els.settingsAlert.hidden = uiState.settingsCollapsed;
+        els.settingsToggleBtn.setAttribute("aria-expanded", String(!uiState.settingsCollapsed));
+        $("#settingsToggleLabel").textContent = uiState.settingsCollapsed ? "設定を開く" : "折り畳む";
+        els.toolbar.classList.toggle("is-docked", uiState.toolbarDocked);
+        document.body.classList.toggle("toolbar-docked", uiState.toolbarDocked);
+        els.toolbarDockBtn.setAttribute("aria-pressed", String(uiState.toolbarDocked));
+        $("#toolbarDockLabel").textContent = uiState.toolbarDocked ? "固定解除" : "下部固定";
+      }
 
       function syncSettings() {
         $("#eventTitle").value = state.event.title;
@@ -734,8 +782,8 @@
         const headers = [
           `<div class="grid-header time-header" style="grid-column:1;grid-row:1"><span class="header-copy"><strong>時間</strong><small>TIME</small></span></div>`,
           `<div class="grid-header" style="grid-column:2;grid-row:1"><span class="header-copy"><strong>全体進行</strong><small>MASTER</small></span></div>`,
-          ...lanes.map((lane,index) => `<div class="grid-header lane-header" data-lane-id="${h(lane.id)}" style="grid-column:${index+3};grid-row:1"><span class="header-copy"><strong>${h(lane.name)}</strong><small>${h(LANE_TYPE_LABELS[lane.type] || "OTHER")}</small></span><span class="lane-actions"><button class="lane-action" data-lane-action="left" data-id="${h(lane.id)}" ${index===0?"disabled":""} title="左へ移動">←</button><button class="lane-action" data-lane-action="right" data-id="${h(lane.id)}" ${index===lanes.length-1?"disabled":""} title="右へ移動">→</button><button class="lane-action" data-lane-action="edit" data-id="${h(lane.id)}" title="編集">✎</button><button class="lane-action" data-lane-action="delete" data-id="${h(lane.id)}" title="削除">×</button></span></div>`),
-          `<div class="grid-header" style="grid-column:${noteCol};grid-row:1"><span class="header-copy"><strong>備考・連絡</strong><small>NOTES</small></span></div>`
+          ...lanes.map((lane,index) => `<div class="grid-header lane-header" data-lane-id="${h(lane.id)}" style="grid-column:${index+3};grid-row:1"><span class="header-copy"><strong>${h(lane.name)}</strong></span><span class="lane-actions"><button class="lane-action" data-lane-action="left" data-id="${h(lane.id)}" ${index===0?"disabled":""} title="左へ移動">←</button><button class="lane-action" data-lane-action="right" data-id="${h(lane.id)}" ${index===lanes.length-1?"disabled":""} title="右へ移動">→</button><button class="lane-action" data-lane-action="edit" data-id="${h(lane.id)}" title="編集">✎</button><button class="lane-action" data-lane-action="delete" data-id="${h(lane.id)}" title="削除">×</button></span></div>`),
+          `<div class="grid-header" style="grid-column:${noteCol};grid-row:1"><span class="header-copy"><strong>備考・連絡</strong></span></div>`
         ];
         const cells = [];
         range.slots.forEach((minute, index) => {
@@ -770,7 +818,7 @@
         $("#timelineHeading").textContent = state.event.title || "タイムライン";
       }
 
-      function renderAll() { syncSettings(); renderLegend(); renderTimeline(); }
+      function renderAll() { syncSettings(); renderLegend(); renderTimeline(); applyUiState(); }
       function timeOptions(includeEnd = true) {
         const range = getRange();
         if (!range) return "";
@@ -867,6 +915,8 @@
       $("#addGlobalBtn").addEventListener("click", () => openTaskDialog("global"));
       $("#addNoteBtn").addEventListener("click", () => openNoteDialog());
       $("#saveBtn").addEventListener("click", () => saveNow(true));
+      $("#settingsToggleBtn").addEventListener("click", () => { uiState.settingsCollapsed = !uiState.settingsCollapsed; applyUiState(); saveUiState(); });
+      $("#toolbarDockBtn").addEventListener("click", () => { uiState.toolbarDocked = !uiState.toolbarDocked; applyUiState(); saveUiState(); });
       $("#printBtn").addEventListener("click", () => { if (!settingsValid(true)) return; buildPrint(); window.print(); });
       $("#resetBtn").addEventListener("click", () => {
         if (!confirm("イベント情報・部署・タスク・備考をすべて削除します。JSONを書き出していない内容は元に戻せません。続けますか？")) return;
@@ -876,6 +926,7 @@
         toast("すべての内容を削除しました");
       });
       $("#exportBtn").addEventListener("click", exportJson);
+      $("#csvExportBtn").addEventListener("click", exportCsv);
       $("#importBtn").addEventListener("click", () => $("#importInput").click());
       $("#importInput").addEventListener("change", importJson);
       $$('[data-close-dialog]').forEach(button => button.addEventListener("click", () => button.closest("dialog").close()));
@@ -977,6 +1028,39 @@
         link.href = url; link.download = `${safeName}_${state.event.date || "undated"}.json`; link.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast("JSONを書き出しました");
+      }
+      function csvCell(value) {
+        let text = String(value ?? "");
+        if (/^[\t\r ]*[=+@-]/.test(text)) text = `'${text}`;
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+      function exportCsv() {
+        saveNow(false);
+        const laneNames = new Map(state.lanes.map(lane => [lane.id, lane.name]));
+        const records = [
+          ...state.globalTasks.map(task => ["全体工程", task.start, task.end, "", task.title, CATEGORY_LABELS[task.category] || "", ""]),
+          ...state.tasks.map(task => ["タスク", task.start, task.end, laneNames.get(task.laneId) || "", task.title, CATEGORY_LABELS[task.category] || "", task.memo || ""]),
+          ...state.notes.map(note => ["備考", note.time, "", "", note.text, "", ""])
+        ].sort((a,b) => toMinutes(a[1]) - toMinutes(b[1]) || a[0].localeCompare(b[0], "ja"));
+        const rows = [
+          ["イベント基本設定"],
+          ["イベント名", state.event.title],
+          ["日付", state.event.date],
+          ["会場名", state.event.venue],
+          ["開始時刻", state.event.startTime],
+          ["終了時刻", state.event.endTime],
+          ["時間粒度", `${state.event.interval}分`],
+          [],
+          ["種別", "開始時刻", "終了時刻", "部署・スタッフ", "内容", "カテゴリ", "メモ"],
+          ...records
+        ];
+        const csv = `\uFEFF${rows.map(row => row.map(csvCell).join(",")).join("\r\n")}`;
+        const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob), link = document.createElement("a");
+        const safeName = (state.event.title || "event-timetable").replace(/[\\/:*?"<>|]/g,"_").slice(0,50);
+        link.href = url; link.download = `${safeName}_${state.event.date || "undated"}.csv`; link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast("表計算用CSVを書き出しました");
       }
       async function importJson(event) {
         const file = event.target.files?.[0];
@@ -1085,8 +1169,8 @@
         const headers = [
           `<div class="print-grid-header" style="grid-column:1;grid-row:1">時間<small>TIME</small></div>`,
           `<div class="print-grid-header" style="grid-column:2;grid-row:1">全体進行<small>MASTER</small></div>`,
-          ...lanes.map((lane,i) => `<div class="print-grid-header" style="grid-column:${i+3};grid-row:1">${h(lane.name)}<small>${h(LANE_TYPE_LABELS[lane.type] || "OTHER")}</small></div>`),
-          `<div class="print-grid-header" style="grid-column:${noteCol};grid-row:1">備考・連絡<small>NOTES</small></div>`
+          ...lanes.map((lane,i) => `<div class="print-grid-header" style="grid-column:${i+3};grid-row:1">${h(lane.name)}</div>`),
+          `<div class="print-grid-header" style="grid-column:${noteCol};grid-row:1">備考・連絡</div>`
         ];
         const cells = [];
         range.slots.forEach((minute,index) => {
@@ -1113,13 +1197,13 @@
         const updated = new Date(state.meta.updatedAt || Date.now());
         return `<section class="print-page">
           <div class="print-header">
-            <div class="print-title"><div class="print-accent"></div><h1>${h(state.event.title || "イベント・タイムスケジュール")}</h1><p>EVENT OPERATIONS / RUN OF SHOW</p></div>
-            <div class="print-page-no">PAGE&nbsp; ${String(pageIndex+1).padStart(2,"0")} / ${String(totalPages).padStart(2,"0")}</div>
+            <div class="print-title"><div class="print-accent"></div><h1>${h(state.event.title || "イベント・タイムスケジュール")}</h1></div>
+            <div class="print-page-no">ページ&nbsp; ${String(pageIndex+1).padStart(2,"0")} / ${String(totalPages).padStart(2,"0")}</div>
             <div class="print-meta"><strong>${h(formatDate(state.event.date))}</strong><span>会場&nbsp; ${h(state.event.venue || "未設定")}</span><span>部門&nbsp; ${laneFrom ? `${laneFrom}-${laneTo} / ${totalLanes}` : "なし"}</span><span>更新&nbsp; ${h(new Intl.DateTimeFormat("ja-JP",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(updated))}</span><div class="print-pills"><span class="print-pill"><span>開始</span><b>${h(state.event.startTime)}</b></span><span class="print-pill"><span>終了</span><b>${h(state.event.endTime)}</b></span><span class="print-pill"><span>時間粒度</span><b>${state.event.interval}分</b></span></div></div>
           </div>
           <div class="print-grid" style="--print-row-h:${4.55 / range.displaySpan}mm;grid-template-columns:${cols};grid-template-rows:${rows}">${[...headers,...cells,...items].join("")}</div>
           <div class="print-legend">${["normal","logistics","rehearsal","important","break"].map(key=>`<span class="legend-item"><span class="legend-swatch ${key}"></span>${h(CATEGORY_LABELS[key])}</span>`).join("")}</div>
-          <div class="print-footer"><span>段取り帖 / EVENT TIMETABLE</span><span>時刻・担当・工程を現場で相互確認してください</span></div>
+          <div class="print-footer"><span>段取り帖</span><span>時刻・担当・工程を現場で相互確認してください</span></div>
         </section>`;
       }
       window.addEventListener("beforeprint", buildPrint);
