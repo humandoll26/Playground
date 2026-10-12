@@ -1,6 +1,6 @@
 {
   "name": "pdf-reading-assist",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "読書ガイドと行スナップで長いPDFを読みやすくするデスクトップアプリ",
   "main": "desktop/main.cjs",
   "author": "humandoll26",
