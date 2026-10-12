@@ -1,10 +1,9 @@
+import * as pdfjs from "./vendor/pdf.min.mjs";
+
 (() => {
   "use strict";
 
-  const pdfjs = window.pdfjsLib;
-  if (pdfjs) {
-    pdfjs.GlobalWorkerOptions.workerSrc = "./vendor/pdf.worker.min.js";
-  }
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL("./vendor/pdf.worker.min.mjs", import.meta.url).href;
 
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -245,7 +244,16 @@
         state.pdf = null;
       }
       const buffer = await file.arrayBuffer();
-      state.pdf = await pdfjs.getDocument({ data: buffer }).promise;
+      state.pdf = await pdfjs.getDocument({
+        data: buffer,
+        // Explicit compatibility policy for older PDF.js versions. In v6 the
+        // eval code path was removed; the patched library is the protection.
+        isEvalSupported: false,
+        cMapUrl: new URL("./vendor/cmaps/", import.meta.url).href,
+        cMapPacked: true,
+        standardFontDataUrl: new URL("./vendor/standard_fonts/", import.meta.url).href,
+        wasmUrl: new URL("./vendor/wasm/", import.meta.url).href
+      }).promise;
       elements.pageCount.textContent = state.pdf.numPages;
       const saved = getSavedPosition();
       if (saved?.scale) {
